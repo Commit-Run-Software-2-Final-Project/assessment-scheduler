@@ -31,22 +31,6 @@ class Staff(User,UserMixin):
       self.cNum = 2
     else: 
       self.cNum = 3 #Instructor
-
-    # Other teaching positions for possible extension
-    # if status == "Part-Time Instructor": 
-    #   self.cNum = 1
-    # elif status == "Instructor": 
-    #   self.cNum = 2
-    # elif status == "Head of Department": 
-    #   self.cNum = 2  
-    # elif status == "Lecturer": 
-    #   self.cNum = 3
-    # elif status == "Teaching Assisstant": 
-    #   self.cNum = 2
-    # elif status == "Tutor": 
-    #   self.cNum = 2
-    # else: 
-    #   self.cNum = 1  #Part-Time Tutor
     
     
   def get_id(self):
@@ -62,14 +46,7 @@ class Staff(User,UserMixin):
         "coursesNum": self.cNum,
         "coursesAssigned": [course.to_json() for course in self.coursesAssigned]
     }
-
-  #Lecturers must register before using system
-  def register(firstName, lastName, u_ID, status, email, password):
-    newStaff = Staff(firstName, lastName, u_ID, status, email, password)
-    db.session.add(newStaff)  #add to db
-    db.session.commit()
-    return newStaff  
-  
+    
   def login(self):
     return flask_login.login_user(self)
 

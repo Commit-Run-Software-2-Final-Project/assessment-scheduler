@@ -11,6 +11,7 @@ class CourseAssessment(db.Model):
     startTime = db.Column(db.Time, nullable = True)
     endTime = db.Column(db.Time, nullable = True)
     clashDetected = db.Column(db.Boolean, default = False)
+    
 
     # More features to add for possible extension
     # duration = db.Column(db.Numeric(4, 2), nullable = False)

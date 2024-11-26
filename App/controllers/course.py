@@ -8,7 +8,9 @@ def add_Course(courseCode, courseTitle, description, level, semester, aNum):
         return course
     else:
          #Add new Course
-        newCourse = Course.addCourse(courseCode, courseTitle, description, level, semester, aNum)
+        newCourse = Course(courseCode, courseTitle, description, level, semester, aNum)
+        db.session.add(newCourse)  #add to db
+        db.session.commit()
         return newCourse
     return None        
 
