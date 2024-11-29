@@ -25,7 +25,7 @@ class User(db.Model, UserMixin):
         return check_password_hash(self.password, password)
     
     def to_json(self):
-	    return {
+        return {
             "u_ID": self.u_ID,
             "password": self.password,
             "email":self.email
