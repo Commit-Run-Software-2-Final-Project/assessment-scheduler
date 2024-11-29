@@ -29,7 +29,7 @@ class User(db.Model, UserMixin):
             "u_ID": self.u_ID,
             "password": self.password,
             "email":self.email
-        }
-        
+        } 
+    
     def __str__(self):
         return f"Staff(id={self.u_ID}, email={self.email})"
