@@ -8,3 +8,5 @@ from .courseStaff import *
 from .courseAssessment import *
 from .courseProgramme import *
 from .semester import *
+from .twoDayRule import *
+from .weekRule import *
