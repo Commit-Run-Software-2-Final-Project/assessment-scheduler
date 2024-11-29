@@ -6,7 +6,9 @@ def register_staff(firstName, lastName, u_ID, status, email, pwd):
     staff = db.session.query(Staff).filter(Staff.email == email).count()
 
     if staff == 0:
-        newLect = Staff.register(firstName, lastName, u_ID, status, email, pwd)
+        newLect = Staff(firstName, lastName, u_ID, status, email, pwd)
+        db.session.add(newLect)
+        db.session.commit()
         return newLect
     return None
 
