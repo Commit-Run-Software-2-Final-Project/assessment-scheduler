@@ -33,3 +33,6 @@ class User(db.Model, UserMixin):
     
     def __str__(self):
         return f"Staff(id={self.u_ID}, email={self.email})"
+    
+    def get_id(self):
+        return str(self.u_ID)
