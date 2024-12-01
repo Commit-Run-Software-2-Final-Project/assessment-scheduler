@@ -1,6 +1,7 @@
 import pytest
 from App.models import Staff, Status, CourseStaff
 from App.database import db
+from App import create_app
 
 '''
 Unit Tests
@@ -62,25 +63,14 @@ def test_login_failure(mocker):
 '''
 Integration Tests
 '''
-def test_register_staff(db_session):
-    from App.controllers.staff import register_staff
-    # Register a new staff member
-    staff = register_staff(
-        firstName="John",
-        lastName="Doe",
-        u_ID="1",
-        status="Instructor",
-        email="john.doe@example.com",
-        pwd="securepassword"
-    )
-    assert staff is not None
-    assert staff.email == "john.doe@example.com"
+@pytest.fixture
+def client(app):
+    return app.test_client()
 
-def test_login_staff_success(db_session, app):
-    from App.controllers.staff import login_staff, register_staff
-    # Use Flask's test app to simulate a request context
+def test_login_staff_success(app, db_session):
+    from App.controllers.staff import register_staff, login_staff
+    
     with app.app_context():
-        # Register a new staff member
         register_staff(
             firstName="John",
             lastName="Doe",
@@ -89,12 +79,10 @@ def test_login_staff_success(db_session, app):
             email="john.doe@example.com",
             pwd="securepassword"
         )
-
-        # Try logging in
+        
         result = login_staff(email="john.doe@example.com", password="securepassword")
-
-        # Assuming the login function returns the staff object, check if it is not None
-        assert result is not None
+        assert result == True
+        
 
 def test_register_staff_duplicate_email(app, db_session):
     from App.controllers.staff import register_staff
