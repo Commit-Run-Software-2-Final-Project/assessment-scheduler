@@ -15,7 +15,35 @@ TEST_USER = {
     "email": "test@example.com",
     "password": "password123"
 }
+@pytest.fixture(scope="function")
+def app():
+    """Create a Flask app configured for testing."""
+    app = create_app()
+    app.config['TESTING'] = True
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    return app
 
+@pytest.fixture(scope="function")
+def client(app):
+    """Create a test client for the app."""
+    return app.test_client()
+
+@pytest.fixture(scope="function")
+def app_context(app):
+    """Provide an app context for database operations."""
+    with app.app_context():
+        db.create_all()
+        # Create test users
+        staff = Staff(fName="John", lName="Doe", status=Status.HOD, u_ID=1, email="staff@example.com", password="staffpassword")
+        admin = Admin(u_ID=2, email="admin@example.com", password="adminpassword")
+        db.session.add(staff)
+        db.session.add(admin)
+        db.session.commit()
+        yield
+        db.session.remove()
+        db.drop_all()
+        
 @pytest.fixture
 def test_user():
     """Fixture for creating a test user."""
