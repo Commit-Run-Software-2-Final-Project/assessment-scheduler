@@ -1,4 +1,6 @@
 from App.database import db
+from datetime import datetime
+
 
 class Semester(db.Model):
     __tablename__='semester'
@@ -8,11 +10,12 @@ class Semester(db.Model):
     semNum = db.Column(db.Integer,nullable=False)
     maxAssessments = db.Column(db.Integer,nullable=False)
 
-def __init__(self, startDate, endDate, semNum, maxAssessments):
-    self.startDate = startDate
-    self.endDate = endDate
-    self.semNum = semNum
-    self.maxAssessments = maxAssessments
+    def __init__(self, startDate, endDate, semNum, maxAssessments):
+        # Convert string dates to Python date objects
+        self.startDate = datetime.strptime(startDate, '%Y-%m-%d').date()
+        self.endDate = datetime.strptime(endDate, '%Y-%m-%d').date()
+        self.semNum = int(semNum)
+        self.maxAssessments = int(maxAssessments)
 
 def to_json(self):
     return{
