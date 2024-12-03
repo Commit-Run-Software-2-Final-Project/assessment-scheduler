@@ -125,3 +125,27 @@ input {
     padding: 8px 12px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+.flash-message {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--tertiary-color);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 6px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+.flash-message.show {
+    opacity: 1;
+    visibility: visible;
+}

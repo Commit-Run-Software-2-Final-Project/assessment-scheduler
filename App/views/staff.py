@@ -240,17 +240,21 @@ def get_account_page():
 @staff_views.route('/account', methods=['POST'])
 @jwt_required()
 def get_selected_courses():
-    courses=list_Courses()
-    id=get_uid(get_jwt_identity())  #gets u_id from email token
-
+    id = get_uid(get_jwt_identity())
+    
     if request.method == 'POST':
         course_codes_json = request.form.get('courseCodes')
         course_codes = json.loads(course_codes_json)
-        for code in course_codes:
-            obj=add_CourseStaff(id,code)   #add course to course-staff table
-       
-    return redirect(url_for('staff_views.get_account_page'))   
-
+        
+        try:
+            for code in course_codes:
+                obj = add_CourseStaff(id, code)
+            
+            return jsonify({'message': 'Courses saved successfully'}), 200
+        except Exception as e:
+            return jsonify({'error': str(e)}), 400
+        
+    return jsonify({'error': 'Invalid request'}), 400
 # Gets assessments page
 @staff_views.route('/assessments', methods=['GET'])
 @jwt_required()
