@@ -4,6 +4,7 @@ from App.models import Course
 from App.models import TwoDayRule, OneWeekRuleStrategy
 from App.database import db
 
+
 def add_CourseAsm(courseCode, a_ID, startDate, endDate, startTime, endTime, clashDetected):
     #Add new Assessment to Course
     # newAsm = addCourseAsg(courseCode, a_ID, startDate, endDate, startTime, endTime)
@@ -65,15 +66,15 @@ def setClashStrategy(assessmentID, strategyName):
 def check_clash(assessments, assessmentID):
     assessment = CourseAssessment.query.get(assessmentID)
     if assessment:
-        if assessment.clashRule == "WeekRule":
+        if assessment.clashRule == "OneWeekRuleStrategy":
             rule = OneWeekRuleStrategy()
             return rule.check_clash(assessment.startDate, assessments)
         elif assessment.clashRule == "TwoDayRule":
             rule = TwoDayRule()
             return rule.check_clash(assessment.startDate, assessments)
         else:
-            return None
-    return None
+            return assessment.clashRule
+    return False
 
 
 def check_clashes(courseAssessmentID):

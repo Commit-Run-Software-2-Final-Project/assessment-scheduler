@@ -1,5 +1,7 @@
 from App.database import db
 from .clashRuleStrategy import ClashRuleStrategy
+from .twoDayRule import TwoDayRule
+from .weekRule import OneWeekRuleStrategy
 
 class CourseAssessment(db.Model):
     __tablename__ = 'courseAssessment'
@@ -45,17 +47,16 @@ class CourseAssessment(db.Model):
         if not isinstance(clashRule, ClashRuleStrategy):
             raise TypeError("clashRule must be an instance of ClashRuleStrategy")
         
-        self.clash_rule_strategy_name = clashRule.__class__.__name__
+        self.clashRule = clashRule.__class__.__name__
         print(clashRule.__class__.__name__)
     
     def getClashRule(self):
-        strategy_class_name = self.clash_rule_strategy_name
-        clash_rule_class = globals().get(strategy_class_name)
-
-        if clash_rule_class and issubclass(clash_rule_class, ClashRuleStrategy):
-            return clash_rule_class()
+        if self.clashRule == "TwoDayRule":
+            return TwoDayRule()
+        elif self.clashRule == "OneWeekRuleStrategy":
+            return OneWeekRuleStrategy()
         else:
-            raise ValueError(f"Invalid clashRule strategy: {strategy_class_name}")
+            return None
 
     #Add new assessment to course
     def addCourseAsg(self, courseCode, a_ID, startDate, endDate, startTime, endTime, clashDetected):

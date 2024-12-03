@@ -1,5 +1,5 @@
 import pytest
-from App.models import CourseAssessment, Assessment, Course
+from App.models import CourseAssessment, Assessment, Course, TwoDayRule, OneWeekRuleStrategy
 from App.controllers.courseAssessment import (
     add_CourseAsm,
     list_Assessments,
@@ -9,11 +9,16 @@ from App.controllers.courseAssessment import (
     get_CourseAsm_code,
     delete_CourseAsm,
     get_clashes,
+    check_clash,
+    setClashStrategy
 )
 from App.models.assessment import Category
 from App.database import db
 from datetime import date, time
 
+class MockAssessment:
+    def __init__(self, start_date):
+        self.startDate = start_date
 
 
 @pytest.fixture(scope='function')
@@ -130,6 +135,43 @@ def test_get_clashes(test_app, session, sample_data):
         clashes = get_clashes()
         assert len(clashes) == 1
         assert clashes[0].clashDetected is True
+
+def test_setClashRule(test_app, session, sample_data):
+    """"Test setting clash strategy"""
+    with test_app.app_context():
+        sample_data["course_assessment"].setClashRule(TwoDayRule())
+        assert sample_data["course_assessment"].clashRule == "TwoDayRule"
+
+def test_getClashRule(test_app, session, sample_data):
+    """Test Getting Clash Rule"""
+    with test_app.app_context():
+        sample_data["course_assessment"].clashRule = "TwoDayRule"
+        assert isinstance(sample_data["course_assessment"].getClashRule(), TwoDayRule)
+
+def test_setClashStrategy(test_app, session, sample_data):
+    """Test setting clash strategy with controller"""
+    with test_app.app_context():
+        course_assessment = setClashStrategy(1, "WeekRule")
+        assert course_assessment.clashRule == "OneWeekRuleStrategy"
+
+def test_check_clash(test_app, session, sample_data):
+    with test_app.app_context():
+        sample_data["course_assessment"].clashRule = "TwoDayRule"
+        course_assessment = sample_data["course_assessment"]
+        course_assessment.clashRule = "TwoDayRule"
+        db.session.merge(course_assessment)
+        assessments = [
+    MockAssessment(date(2024, 12, 1)),
+    MockAssessment(date(2024, 12, 5)),
+    MockAssessment(date(2024, 12, 8)),
+]
+        assert check_clash(assessments, 1) == True
+        assessments = [
+    MockAssessment(date(2024, 12, 4)),
+    MockAssessment(date(2024, 12, 5)),
+    MockAssessment(date(2024, 12, 8)),
+]
+        assert check_clash(assessments, 1) == False   
 
 
 
