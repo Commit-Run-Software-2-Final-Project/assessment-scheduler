@@ -3,8 +3,9 @@ from flask import Flask
 from flask.cli import with_appcontext, AppGroup
 from App.database import db, get_migrate
 from App.main import create_app
-from App.models import Staff, Course, Assessment, Programme, Admin
-from App.controllers import Course
+from App.models import Staff, Course, Assessment, Programme, Admin, OneWeekRuleStrategy, TwoDayRule, CourseAssessment
+from App.controllers import Course, setClashStrategy
+from datetime import date, time
 
 from App.controllers.course import (
     add_Course
@@ -13,6 +14,81 @@ from App.controllers.course import (
 # This commands file allow you to create convenient CLI commands for testing controllers!!
 app = create_app()
 
+
+@click.command(name='set_clash_rule')
+@click.argument('assessment_id')
+@click.argument('rule')
+@with_appcontext
+def set_clash_rule(assessment_id, rule):
+    # Retrieve the CourseAssessment by ID
+    course_assessment = CourseAssessment.query.get(assessment_id)
+    
+    if course_assessment is None:
+        click.echo(f"CourseAssessment with ID {assessment_id} not found.")
+        return
+
+    # Set the clash rule based on the provided argument
+    if rule == 'OneWeekRule':
+        clash_rule = OneWeekRuleStrategy()
+    elif rule == 'TwoDayRule':
+        clash_rule = TwoDayRule()
+    else:
+        click.echo(f"Unknown clash rule: {rule}")
+        return
+
+    # Set the clash rule strategy
+    course_assessment.setClashRule(clash_rule)
+    db.session.commit()
+
+    click.echo(f"Clash rule {rule} set for CourseAssessment ID {assessment_id}.")
+@app.cli.command("teststuff")
+def testing():
+    course_code = "CS101"
+    course_title = "Introduction to Computer Science"
+    description = "A beginner course on computer science concepts."
+    level = 100
+    semester = 1
+    a_num = 0
+
+    course = Course(courseCode=course_code,
+                    courseTitle=course_title,
+                    description=description,
+                    level=level,
+                    semester=semester,
+                    aNum=a_num)
+    
+    db.session.add(course)
+    db.session.commit()
+
+    #print(f"Course created with courseCode: {course.courseCode}")
+
+    course_code = "CS101"
+    assessment_id = 123
+    start_date = date(2024, 11, 27)
+    end_date = date(2024, 11, 28)
+    start_time = time(10, 0)  # 10:00 AM
+    end_time = time(12, 0) 
+    clash_detected = False
+    
+    course_assessment = CourseAssessment(courseCode=course_code,
+                                         a_ID=assessment_id,
+                                         startDate=start_date,
+                                         endDate=end_date,
+                                         startTime=start_time,
+                                         endTime=end_time,
+                                         clashDetected=clash_detected)
+
+    # print(f"TwoDayRule class name: {TwoDayRule.__name__}")
+    # print(f"OneWeekRuleStrategy class name: {OneWeekRuleStrategy.__name__}")
+    
+    db.session.add(course_assessment)
+    db.session.commit()
+    
+    #course_assessment.setClashRule(TwoDayRule())
+    db.session.commit()
+    setClashStrategy(1, "WeekRule")
+    print(f"CourseAssessment created with ID {course_assessment.id}")
+   
 # This command creates and initializes the database
 @app.cli.command("init", help="Creates and initializes the database")
 def initialize():

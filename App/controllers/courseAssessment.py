@@ -1,6 +1,7 @@
 from App.models import CourseAssessment
 from App.models import Assessment
 from App.models import Course
+from App.models import TwoDayRule, OneWeekRuleStrategy
 from App.database import db
 
 def add_CourseAsm(courseCode, a_ID, startDate, endDate, startTime, endTime, clashDetected):
@@ -46,6 +47,38 @@ def delete_CourseAsm(course_assessment):
     db.session.delete(course_assessment)
     db.session.commit()
     return True   
-     
+
+def setClashStrategy(assessmentID, strategyName):
+    assessment = CourseAssessment.query.get(assessmentID)
+    if assessment:
+        if strategyName == "TwoDayRule":
+            assessment.setClashRule(TwoDayRule())
+            return assessment
+        elif strategyName == "WeekRule":
+            assessment.setClashRule(OneWeekRuleStrategy())
+            return assessment
+        else:
+            return None
+    else:
+        return None
+
+def check_clash(assessments, assessmentID):
+    assessment = CourseAssessment.query.get(assessmentID)
+    if assessment:
+        if assessment.clashRule == "WeekRule":
+            rule = OneWeekRuleStrategy()
+            return rule.check_clash(assessment.startDate, assessments)
+        elif assessment.clashRule == "TwoDayRule":
+            rule = TwoDayRule()
+            return rule.check_clash(assessment.startDate, assessments)
+        else:
+            return None
+    return None
+
+
+def check_clashes(courseAssessmentID):
+    courseAssessment = CourseAssessment.query.get(courseAssessmentID)
+    print(courseAssessment)
+
 def get_clashes():
     return CourseAssessment.query.filter_by(clashDetected=True).all()
