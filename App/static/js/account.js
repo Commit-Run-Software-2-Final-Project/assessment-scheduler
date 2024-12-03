@@ -20,8 +20,12 @@ function handleSearch(e) {
   tableRows.forEach((row) => {
     const courseCode = row.querySelector("td").textContent.toLowerCase().trim();
     
-    // Show row if courseCode contains search term (partial match)
-    if (courseCode.includes(searchTerm)) {
+    // If search is empty, show all courses
+    if (searchTerm === "") {
+      row.style.display = "";
+    }
+    // Otherwise, filter based on search term
+    else if (courseCode.includes(searchTerm)) {
       row.style.display = "";
     } else {
       row.style.display = "none";
@@ -29,11 +33,7 @@ function handleSearch(e) {
   });
 
   // Show/hide dropdown based on search input
-  if (searchTerm.length > 0) {
-    searchDropdown.style.display = "block";
-  } else {
-    searchDropdown.style.display = "none";
-  }
+  searchDropdown.style.display = "block";
 }
 
 function addCourse(course) {
@@ -51,6 +51,10 @@ function addCourse(course) {
 
 function resetSearch() {
   searchInput.value = "";
+  // Show all courses when search is reset
+  tableRows.forEach((row) => {
+    row.style.display = "";
+  });
   searchDropdown.style.display = "none";
 }
 
