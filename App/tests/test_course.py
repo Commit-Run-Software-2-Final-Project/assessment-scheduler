@@ -4,18 +4,18 @@ from App.database import db
 from App import create_app
 from App.models import Course  # Import all your models here
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 def app():
     """Create and configure a test app instance"""
     app = create_app('testing')
     return app
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 def client(app):
     """Create a test client using the app fixture"""
     return app.test_client()
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 def _db(app):
     """Create database tables for the entire test session"""
     with app.app_context():

@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, render_template, redirect, url_fo
 from flask_login import current_user
 from flask import current_app as app
 from flask_mail import Mail, Message
-from sqlalchemy import not_
+from sqlalchemy import not_, null
 from App.controllers import Staff
 from App.controllers import Course, Semester
 from App.controllers import CourseAssessment
@@ -95,8 +95,12 @@ def get_calendar_page():
         assessments = []
 
     sem=Semester.query.order_by(Semester.id.desc()).first()
-    semester = {'start':sem.startDate,'end':sem.endDate}
-
+    if sem is not None:
+        semester = {'start':sem.startDate,'end':sem.endDate}
+    else:
+        semester = {'start': None, 'end': None}
+        
+        
     messages=[]
     message = session.pop('message',None)
     if message:
