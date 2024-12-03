@@ -14,10 +14,6 @@ class CourseAssessment(db.Model):
     clashDetected = db.Column(db.Boolean, default = False)
     clashRule = db.Column(db.String(50), nullable=True)
 
-    # More features to add for possible extension
-    # duration = db.Column(db.Numeric(4, 2), nullable = False)
-    # details = db.Column(db.String(250), nullable = True)
-    # weight = db.Column(db.Integer, nullable = False)
 
     def __init__(self, courseCode, a_ID, startDate, endDate, startTime, endTime, clashDetected):
         self.courseCode = courseCode
@@ -34,7 +30,7 @@ class CourseAssessment(db.Model):
             "courseCode" : self.courseCode,
             "a_ID" : self.a_ID,
             "startDate" : self.startDate,
-            
+
             "endDate" : self.endDate,
             "startTime" : self.startTime,
             "endTime" : self.endTime,
