@@ -58,13 +58,11 @@ def test_login_failure_incorrect_password(mock_db_session, mock_admin_class):
 '''
 Integration Tests
 '''
-@pytest.fixture
-def client(app):
-    return app.test_client()
 
-def test_login_admin_success(app, client):
+
+def test_login_admin_success(test_app, client):
     # Arrange: Add an admin to the database
-    with app.app_context():
+    with test_app.app_context():
         admin = Admin(u_ID=1, email="admin@example.com", password="securepassword")
         admin.set_password("securepassword")
         db.session.add(admin)
@@ -78,9 +76,9 @@ def test_login_admin_success(app, client):
     assert response.status_code == 302 
     assert response.location == '/semester'  
     
-def test_login_admin_failure_incorrect_email(app):
+def test_login_admin_failure_incorrect_email(test_app):
     # Arrange: Add an admin to the database
-    with app.app_context():
+    with test_app.app_context():
         admin = Admin(u_ID=1, email="admin@example.com", password="securepassword")
         admin.set_password("securepassword")
         db.session.add(admin)
@@ -93,9 +91,9 @@ def test_login_admin_failure_incorrect_email(app):
     # Assert: Check the result
     assert result == "Login failed"
 
-def test_login_admin_failure_incorrect_password(app):
+def test_login_admin_failure_incorrect_password(test_app):
     # Arrange: Add an admin to the database
-    with app.app_context():
+    with test_app.app_context():
         admin = Admin(u_ID=1, email="admin@example.com", password="securepassword")
         admin.set_password("securepassword")
         db.session.add(admin)

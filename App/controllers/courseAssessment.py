@@ -36,10 +36,16 @@ def get_CourseAsm_level(level):
         assessments = assessments + get_CourseAsm_code(c)
     return assessments
 
-def delete_CourseAsm(courseAsm):
-    db.session.delete(courseAsm)
+def delete_CourseAsm(course_assessment):
+    # Merge the object into the current session if it's detached
+    if not db.session.is_active:
+        db.session.add(course_assessment)
+    else:
+        course_assessment = db.session.merge(course_assessment)
+        
+    db.session.delete(course_assessment)
     db.session.commit()
-    return True        
+    return True   
      
 def get_clashes():
     return CourseAssessment.query.filter_by(clashDetected=True).all()

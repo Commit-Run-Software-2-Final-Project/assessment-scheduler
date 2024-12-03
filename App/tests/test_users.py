@@ -16,7 +16,7 @@ TEST_USER = {
     "password": "password123"
 }
 @pytest.fixture(scope="function")
-def app():
+def test_app():
     """Create a Flask app configured for testing."""
     app = create_app()
     app.config['TESTING'] = True
@@ -25,14 +25,14 @@ def app():
     return app
 
 @pytest.fixture(scope="function")
-def client(app):
+def client(test_app):
     """Create a test client for the app."""
-    return app.test_client()
+    return test_app.test_client()
 
 @pytest.fixture(scope="function")
-def app_context(app):
+def app_context(test_app):
     """Provide an app context for database operations."""
-    with app.app_context():
+    with test_app.app_context():
         db.create_all()
         # Create test users
         staff = Staff(fName="John", lName="Doe", status=Status.HOD, u_ID=1, email="staff@example.com", password="staffpassword")
@@ -73,10 +73,10 @@ Integration Tests
 '''
 
 @pytest.fixture
-def setup_app(app):
+def setup_app(test_app):
     """Set up the test app and database."""
-    app.config.from_object('App.default_config')  # Replace with actual TestingConfig path
-    with app.app_context():
+    test_app.config.from_object('App.default_config')  # Replace with actual TestingConfig path
+    with test_app.app_context():
         db.create_all()
         # Create test users
         staff = Staff(fName="John", lName="Doe", status=Status.HOD, u_ID=1, email="staff@example.com", password="staffpassword")
@@ -84,8 +84,8 @@ def setup_app(app):
         db.session.add(staff)
         db.session.add(admin)
         db.session.commit()
-    yield app
-    with app.app_context():
+    yield test_app
+    with test_app.app_context():
         db.drop_all()
 
 def test_validate_Staff(setup_app):
