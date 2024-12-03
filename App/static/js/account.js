@@ -31,9 +31,6 @@ function handleSearch(e) {
       row.style.display = "none";
     }
   });
-
-  // Show/hide dropdown based on search input
-  searchDropdown.style.display = "block";
 }
 
 function addCourse(course) {
@@ -46,16 +43,8 @@ function addCourse(course) {
     const courseCodesInput = document.getElementById("courseCodesInput");
     courseCodesInput.value = JSON.stringify(myCourses);
   }
-  resetSearch();
-}
-
-function resetSearch() {
+  // Just clear the search input without hiding courses
   searchInput.value = "";
-  // Show all courses when search is reset
-  tableRows.forEach((row) => {
-    row.style.display = "";
-  });
-  searchDropdown.style.display = "none";
 }
 
 function setExistingCourses() {
@@ -72,3 +61,8 @@ function setExistingCourses() {
 // Initialize
 setExistingCourses();
 searchInput.addEventListener("input", handleSearch);
+
+// Show all courses initially
+tableRows.forEach((row) => {
+  row.style.display = "";
+});
