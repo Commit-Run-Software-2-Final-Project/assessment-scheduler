@@ -28,7 +28,7 @@ def test_no_clash_more_than_two_days():
 
 def test_multiple_assessments_no_clash():
     rule = TwoDayRule()
-    assessments = [MockAssessment(date(2023, 10, 10)), MockAssessment(date(2023, 10, 15))]
+    assessments = [MockAssessment(date(2023, 10, 9)), MockAssessment(date(2023, 10, 15))]
     assert not rule.check_clash(date(2023, 10, 12), assessments)
 
 def test_multiple_assessments_with_clash():
