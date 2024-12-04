@@ -3,6 +3,7 @@ from App.models import Assessment
 from App.models import Course
 from App.models import TwoDayRule, OneWeekRuleStrategy
 from App.database import db
+from datetime import date
 
 
 def add_CourseAsm(courseCode, a_ID, startDate, endDate, startTime, endTime, clashDetected, clashRule=None):
@@ -92,3 +93,31 @@ def check_clashes(courseAssessmentID):
 
 def get_clashes():
     return CourseAssessment.query.filter_by(clashDetected=True).all()
+
+def modify_assessment(id, asmType, startDate, endDate, startTime, endTime, clashRule=None):
+    assessment = get_CourseAsm_id(id)
+    if assessment:
+        assessment.a_ID = asmType
+        if startDate and endDate and startTime and endTime:
+            assessment.startDate = datetime.strptime(startDate, '%Y-%m-%d').date()
+            assessment.endDate = datetime.strptime(endDate, '%Y-%m-%d').date()
+            
+            try:
+                assessment.startTime = datetime.strptime(startTime, '%H:%M:%S').time()
+            except ValueError:
+                assessment.startTime = datetime.strptime(startTime, '%H:%M').time()
+
+            try:
+                assessment.endTime = datetime.strptime(endTime, '%H:%M:%S').time()
+            except ValueError:
+                assessment.endTime = datetime.strptime(endTime, '%H:%M').time()
+
+        if clashRule:
+            if clashRule == "TwoDayRule":
+                assessment.setClashRule(TwoDayRule())
+            elif clashRule == "WeekRule":
+                assessment.setClashRule(OneWeekRuleStrategy())
+
+        db.session.commit()
+        return assessment
+    return None
