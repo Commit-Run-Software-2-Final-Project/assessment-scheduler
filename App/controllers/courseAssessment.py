@@ -1,7 +1,9 @@
 from App.models import CourseAssessment
 from App.models import Assessment
 from App.models import Course
+from App.models import TwoDayRule, OneWeekRuleStrategy
 from App.database import db
+
 
 def add_CourseAsm(courseCode, a_ID, startDate, endDate, startTime, endTime, clashDetected):
     #Add new Assessment to Course
@@ -36,10 +38,48 @@ def get_CourseAsm_level(level):
         assessments = assessments + get_CourseAsm_code(c)
     return assessments
 
-def delete_CourseAsm(courseAsm):
-    db.session.delete(courseAsm)
+def delete_CourseAsm(course_assessment):
+    # Merge the object into the current session if it's detached
+    if not db.session.is_active:
+        db.session.add(course_assessment)
+    else:
+        course_assessment = db.session.merge(course_assessment)
+        
+    db.session.delete(course_assessment)
     db.session.commit()
-    return True        
-     
+    return True   
+
+def setClashStrategy(assessmentID, strategyName):
+    assessment = CourseAssessment.query.get(assessmentID)
+    if assessment:
+        if strategyName == "TwoDayRule":
+            assessment.setClashRule(TwoDayRule())
+            return assessment
+        elif strategyName == "WeekRule":
+            assessment.setClashRule(OneWeekRuleStrategy())
+            return assessment
+        else:
+            return None
+    else:
+        return None
+
+def check_clash(assessments, assessmentID):
+    assessment = CourseAssessment.query.get(assessmentID)
+    if assessment:
+        if assessment.clashRule == "OneWeekRuleStrategy":
+            rule = OneWeekRuleStrategy()
+            return rule.check_clash(assessment.startDate, assessments)
+        elif assessment.clashRule == "TwoDayRule":
+            rule = TwoDayRule()
+            return rule.check_clash(assessment.startDate, assessments)
+        else:
+            return assessment.clashRule
+    return False
+
+
+def check_clashes(courseAssessmentID):
+    courseAssessment = CourseAssessment.query.get(courseAssessmentID)
+    print(courseAssessment)
+
 def get_clashes():
     return CourseAssessment.query.filter_by(clashDetected=True).all()

@@ -1,4 +1,7 @@
 from App.database import db
+from .clashRuleStrategy import ClashRuleStrategy
+from .twoDayRule import TwoDayRule
+from .weekRule import OneWeekRuleStrategy
 
 class CourseAssessment(db.Model):
     __tablename__ = 'courseAssessment'
@@ -13,10 +16,6 @@ class CourseAssessment(db.Model):
     clashDetected = db.Column(db.Boolean, default = False)
     clashRule = db.Column(db.String(50), nullable=True)
 
-    # More features to add for possible extension
-    # duration = db.Column(db.Numeric(4, 2), nullable = False)
-    # details = db.Column(db.String(250), nullable = True)
-    # weight = db.Column(db.Integer, nullable = False)
 
     def __init__(self, courseCode, a_ID, startDate, endDate, startTime, endTime, clashDetected):
         self.courseCode = courseCode
@@ -33,12 +32,27 @@ class CourseAssessment(db.Model):
             "courseCode" : self.courseCode,
             "a_ID" : self.a_ID,
             "startDate" : self.startDate,
-            
+
             "endDate" : self.endDate,
             "startTime" : self.startTime,
             "endTime" : self.endTime,
             "clashDetected" : self.clashDetected
         }
+    
+    def setClashRule(self, clashRule):
+        if not isinstance(clashRule, ClashRuleStrategy):
+            raise TypeError("clashRule must be an instance of ClashRuleStrategy")
+        
+        self.clashRule = clashRule.__class__.__name__
+        print(clashRule.__class__.__name__)
+    
+    def getClashRule(self):
+        if self.clashRule == "TwoDayRule":
+            return TwoDayRule()
+        elif self.clashRule == "OneWeekRuleStrategy":
+            return OneWeekRuleStrategy()
+        else:
+            return None
 
     #Add new assessment to course
     def addCourseAsg(self, courseCode, a_ID, startDate, endDate, startTime, endTime, clashDetected):
