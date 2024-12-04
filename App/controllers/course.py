@@ -11,8 +11,7 @@ def add_Course(courseCode, courseTitle, description, level, semester, aNum):
         newCourse = Course(courseCode, courseTitle, description, level, semester, aNum)
         db.session.add(newCourse)  #add to db
         db.session.commit()
-        return newCourse
-    return None        
+        return newCourse       
 
 def list_Courses():
     return Course.query.all() 
@@ -29,7 +28,10 @@ def edit_course(review, staff, is_positive, comment):
         return review
     return None    
 
-def delete_Course(course):
-    db.session.delete(course)
-    db.session.commit()
-    return True     
+def delete_Course(courseCode):
+    course = Course.query.get(courseCode)
+    if course:
+        db.session.delete(course)
+        db.session.commit()
+        return True
+    return False  

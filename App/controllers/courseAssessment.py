@@ -4,6 +4,7 @@ from App.models import Course
 from App.models import TwoDayRule, OneWeekRuleStrategy
 from App.database import db
 
+
 def add_CourseAsm(courseCode, a_ID, startDate, endDate, startTime, endTime, clashDetected):
     #Add new Assessment to Course
     # newAsm = addCourseAsg(courseCode, a_ID, startDate, endDate, startTime, endTime)
@@ -37,10 +38,16 @@ def get_CourseAsm_level(level):
         assessments = assessments + get_CourseAsm_code(c)
     return assessments
 
-def delete_CourseAsm(courseAsm):
-    db.session.delete(courseAsm)
+def delete_CourseAsm(course_assessment):
+    # Merge the object into the current session if it's detached
+    if not db.session.is_active:
+        db.session.add(course_assessment)
+    else:
+        course_assessment = db.session.merge(course_assessment)
+        
+    db.session.delete(course_assessment)
     db.session.commit()
-    return True        
+    return True   
 
 def setClashStrategy(assessmentID, strategyName):
     assessment = CourseAssessment.query.get(assessmentID)
@@ -59,15 +66,15 @@ def setClashStrategy(assessmentID, strategyName):
 def check_clash(assessments, assessmentID):
     assessment = CourseAssessment.query.get(assessmentID)
     if assessment:
-        if assessment.clashRule == "WeekRule":
+        if assessment.clashRule == "OneWeekRuleStrategy":
             rule = OneWeekRuleStrategy()
             return rule.check_clash(assessment.startDate, assessments)
         elif assessment.clashRule == "TwoDayRule":
             rule = TwoDayRule()
             return rule.check_clash(assessment.startDate, assessments)
         else:
-            return None
-    return None
+            return assessment.clashRule
+    return False
 
 
 def check_clashes(courseAssessmentID):

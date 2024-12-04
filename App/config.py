@@ -11,6 +11,11 @@ def load_config():
         config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI 
         config['SECRET_KEY'] = SECRET_KEY
         delta = JWT_ACCESS_TOKEN_EXPIRES
+    elif config['ENV'] == "TEST": #FOR TESTING
+        config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'  
+        config['SECRET_KEY'] = 'testsecretkey'  
+        config['TESTING'] = True  
+        delta = 7 
     else:
         config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('SQLALCHEMY_DATABASE_URI')
         config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
@@ -33,3 +38,4 @@ def load_config():
     return config
 
 config = load_config()
+
