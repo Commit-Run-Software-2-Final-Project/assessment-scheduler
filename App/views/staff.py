@@ -14,6 +14,7 @@ from flask_jwt_extended import jwt_required
 from datetime import date, timedelta
 import time
 from datetime import datetime
+from App.controllers.courseAssessment import *
 
 from App.controllers.staff import (
     register_staff,
@@ -162,29 +163,56 @@ def update_calendar_page():
             session['message'] = "Assessment modified"
     return session['message']
 
+# def detect_clash(id):
+#     clash=0
+#     sem=Semester.query.order_by(Semester.id.desc()).first() #get the weekly max num of assessments allowed per level
+#     max=sem.maxAssessments
+#     new_assessment=get_CourseAsm_id(id)                     #get current assessment info
+#     compare_code=new_assessment.courseCode.replace(' ','')
+#     all_assessments = CourseAssessment.query.filter(not_(CourseAssessment.a_ID.in_([2, 4, 8]))).all()
+#     if not new_assessment.endDate: #dates not set yet
+#         return False
+#     relevant_assessments=[]
+#     for a in all_assessments:
+#         code=a.courseCode.replace(' ','')
+#         if (code[4]==compare_code[4]) and (a.id!=new_assessment.id): #course are in the same level
+#             if a.startDate is not None: #assessment has been scheduled
+#                 relevant_assessments.append(a)
+
+#     sunday,saturday=get_week_range(new_assessment.endDate.isoformat())
+#     for a in relevant_assessments:
+#         dueDate=a.endDate
+#         if sunday <= dueDate <= saturday:
+#             clash=clash+1
+
+#     return clash>=max
+
+
 def detect_clash(id):
-    clash=0
-    sem=Semester.query.order_by(Semester.id.desc()).first() #get the weekly max num of assessments allowed per level
-    max=sem.maxAssessments
-    new_assessment=get_CourseAsm_id(id)                     #get current assessment info
-    compare_code=new_assessment.courseCode.replace(' ','')
-    all_assessments = CourseAssessment.query.filter(not_(CourseAssessment.a_ID.in_([2, 4, 8]))).all()
-    if not new_assessment.endDate: #dates not set yet
+    assessment = get_CourseAsm_id(id)
+    if not assessment or not assessment.endDate:  # dates not set yet
         return False
-    relevant_assessments=[]
+        
+    compare_code = assessment.courseCode.replace(' ','')
+    all_assessments = CourseAssessment.query.filter(
+        not_(CourseAssessment.a_ID.in_([2, 4, 8]))  # Exclude certain assessment types
+    ).all()
+    
+    relevant_assessments = []
     for a in all_assessments:
-        code=a.courseCode.replace(' ','')
-        if (code[4]==compare_code[4]) and (a.id!=new_assessment.id): #course are in the same level
-            if a.startDate is not None: #assessment has been scheduled
+        code = a.courseCode.replace(' ','')
+        # Check if courses are in the same level and not the same assessment
+        if (code[4] == compare_code[4]) and (a.id != assessment.id):
+            if a.startDate is not None:  # assessment has been scheduled
                 relevant_assessments.append(a)
 
-    sunday,saturday=get_week_range(new_assessment.endDate.isoformat())
-    for a in relevant_assessments:
-        dueDate=a.endDate
-        if sunday <= dueDate <= saturday:
-            clash=clash+1
-
-    return clash>=max
+    # Get the clash rule strategy
+    clash_rule = assessment.getClashRule()
+    if not clash_rule:
+        # Default to TwoDayRule if none set
+        clash_rule = TwoDayRule()
+        
+    return clash_rule.check_clash(assessment.startDate, relevant_assessments)
 
 def get_week_range(iso_date_str):
     date_obj = date.fromisoformat(iso_date_str)
@@ -309,6 +337,7 @@ def add_assessments_action():
     endDate = request.form.get('endDate')
     startTime = request.form.get('startTime')
     endTime = request.form.get('endTime')
+    clash_rule = request.form.get('clashRule')
     
     if startDate=='' or endDate=='' or startTime=='' or endTime=='':
         startDate=None
@@ -317,15 +346,38 @@ def add_assessments_action():
         endTime=None
 
     newAsm = add_CourseAsm(course, asmType, startDate, endDate, startTime, endTime, False)  
-    if newAsm.startDate:
-        clash=detect_clash(newAsm.id)
-        if clash:
-            newAsm.clashDetected = True
-            db.session.commit()
-            flash("Clash detected! The maximum amount of assessments for this level has been exceeded.")
-            time.sleep(1)
+    
+    # Set the clash rule
+    # Instead of:
+# if clash_rule == "TwoDayRule":
+#     newAsm.setClashRule(TwoDayRule())
+# else:
+#     newAsm.setClashRule(OneWeekRuleStrategy())
 
-    return redirect(url_for('staff_views.get_assessments_page'))   
+# Use:
+    clash_rule = request.form.get('clashRule')
+    if newAsm:  # Make sure the assessment was created
+        result = setClashStrategy(newAsm.id, clash_rule)
+        if result:
+            if newAsm.startDate:
+                clash = detect_clash(newAsm.id)
+                if clash:
+                    newAsm.clashDetected = True
+                    db.session.commit()
+                    flash("Clash detected! Assessment dates conflict according to the selected rule.")
+                    time.sleep(1)
+        else:
+            flash("Failed to set clash rule strategy")
+            
+        if newAsm.startDate:
+            clash = detect_clash(newAsm.id)
+            if clash:
+                newAsm.clashDetected = True
+                db.session.commit()
+                flash("Clash detected! Assessment dates conflict according to the selected rule.")
+                time.sleep(1)
+
+        return redirect(url_for('staff_views.get_assessments_page'))  
     
 
 # Modify selected assessment

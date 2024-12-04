@@ -24,7 +24,7 @@ h2{
     text-align: center;
 }
 
-#dropdownCourses, #dropdownAssessments{
+#dropdownCourses, #dropdownAssessments, #dropdownClashRule{
     width: 100%;
     background: var(--primary-color);
     border: none;
