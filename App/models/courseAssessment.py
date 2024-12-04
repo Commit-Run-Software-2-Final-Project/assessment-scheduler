@@ -59,14 +59,15 @@ class CourseAssessment(db.Model):
 
     def to_json(self):
         return {
-            "assessmentNo": self.id,
+            "id": self.id,
             "courseCode": self.courseCode,
             "a_ID": self.a_ID,
             "startDate": self.startDate.isoformat() if self.startDate else None,
             "endDate": self.endDate.isoformat() if self.endDate else None,
             "startTime": self.startTime.isoformat() if self.startTime else None,
             "endTime": self.endTime.isoformat() if self.endTime else None,
-            "clashDetected": self.clashDetected
+            "clashDetected": self.clashDetected,
+            "clashRule": self.clashRule  # Make sure this is included
         }
 
     def setClashRule(self, clashRule):

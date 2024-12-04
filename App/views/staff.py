@@ -158,7 +158,7 @@ def update_calendar_page():
         if clash:
             assessment.clashDetected = True
             db.session.commit()
-            session['message'] = assessment.courseCode+" - Clash detected! The maximum amount of assessments for this level has been exceeded."
+            # session['message'] = assessment.courseCode+" - Clash detected! The maximum amount of assessments for this level has been exceeded."
         else:
             session['message'] = "Assessment modified"
     return session['message']
@@ -302,7 +302,8 @@ def get_assessments_page():
                 'endDate': assessment.endDate,
                 'startTime': assessment.startTime,
                 'endTime': assessment.endTime,
-                'clashDetected':assessment.clashDetected
+                'clashDetected': assessment.clashDetected,
+                'clashRule': assessment.clashRule  # Add this line
                 }
             else:
                 obj={'id': assessment.id,
@@ -312,11 +313,12 @@ def get_assessments_page():
                     'endDate': assessment.endDate.isoformat(),
                     'startTime': assessment.startTime.isoformat(),
                     'endTime': assessment.endTime.isoformat(),
-                    'clashDetected':assessment.clashDetected
+                    'clashDetected': assessment.clashDetected,
+                    'clashRule': assessment.clashRule  # Add this line
                     }
             assessments.append(obj)     #add object to list of assessments
 
-    return render_template('assessments.html', courses=registered_courses, assessments=assessments)      
+    return render_template('assessments.html', courses=registered_courses, assessments=assessments)     
 
 # Gets add assessment page 
 @staff_views.route('/addAssessment', methods=['GET'])
@@ -337,7 +339,7 @@ def add_assessments_action():
     endDate = request.form.get('endDate')
     startTime = request.form.get('startTime')
     endTime = request.form.get('endTime')
-    clash_rule = request.form.get('clashRule')
+    clashRule = request.form.get('clashRule')  # Get the clash rule from form
     
     if startDate=='' or endDate=='' or startTime=='' or endTime=='':
         startDate=None
@@ -345,39 +347,31 @@ def add_assessments_action():
         startTime=None
         endTime=None
 
+    # Create new assessment
     newAsm = add_CourseAsm(course, asmType, startDate, endDate, startTime, endTime, False)  
     
     # Set the clash rule
-    # Instead of:
-# if clash_rule == "TwoDayRule":
-#     newAsm.setClashRule(TwoDayRule())
-# else:
-#     newAsm.setClashRule(OneWeekRuleStrategy())
+    if newAsm and clashRule:
+        newAsm.clashRule = clashRule
+        db.session.commit()
 
-# Use:
-    clash_rule = request.form.get('clashRule')
-    if newAsm:  # Make sure the assessment was created
-        result = setClashStrategy(newAsm.id, clash_rule)
-        if result:
-            if newAsm.startDate:
-                clash = detect_clash(newAsm.id)
-                if clash:
-                    newAsm.clashDetected = True
-                    db.session.commit()
-                    flash("Clash detected! Assessment dates conflict according to the selected rule.")
-                    time.sleep(1)
-        else:
-            flash("Failed to set clash rule strategy")
-            
-        if newAsm.startDate:
-            clash = detect_clash(newAsm.id)
-            if clash:
-                newAsm.clashDetected = True
-                db.session.commit()
-                flash("Clash detected! Assessment dates conflict according to the selected rule.")
-                time.sleep(1)
+    if newAsm.startDate:
+        # Get all other assessments in the same level
+        courseLevel = newAsm.courseCode[4]  # Assuming course code format like 'COMP1234'
+        all_assessments = CourseAssessment.query.filter(
+            CourseAssessment.id != newAsm.id
+        ).all()
+        
+        # Check for clashes using the new method
+        clash = check_clash(all_assessments, newAsm.id)
+        
+        if clash:
+            newAsm.clashDetected = True
+            db.session.commit()
+            flash("Clash detected based on selected rule! Please review the assessment dates.")
+            time.sleep(1)
 
-        return redirect(url_for('staff_views.get_assessments_page'))  
+    return redirect(url_for('staff_views.get_assessments_page'))
     
 
 # Modify selected assessment

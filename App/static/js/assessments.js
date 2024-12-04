@@ -75,6 +75,27 @@ assessments.forEach(assessment => {
     clashDetected.classList.add('clash-detected');
     clashDetected.textContent = `${assessment.clashDetected}`;
 
+    const clashRuleLabel = document.createElement('p');
+    clashRuleLabel.classList.add('card-label');
+    clashRuleLabel.textContent = 'Clash Rule';
+    const clashRule = document.createElement('p');
+    clashRule.classList.add('clash-rule');
+
+    // Format the clash rule text to be more readable
+    let clashRuleText = assessment.clashRule;
+    if (clashRuleText) {
+        // Convert "TwoDayRule" to "Two Day Rule" and "OneWeekRuleStrategy" to "One Week Rule"
+        clashRuleText = clashRuleText === 'TwoDayRule' ? 'Two Day Rule' : 
+                        clashRuleText === 'OneWeekRuleStrategy' ? 'One Week Rule' : 
+                        clashRuleText;
+    } else {
+        clashRuleText = 'No rule set';
+    }
+    clashRule.textContent = clashRuleText;
+
+    // Add these elements to your card
+    assessmentInfo.appendChild(clashRuleLabel);
+    assessmentInfo.appendChild(clashRule);
 
     // Create action links (modify and delete can be replaced with actual functionality)
     const modifyLink = document.createElement('button');
@@ -88,7 +109,6 @@ assessments.forEach(assessment => {
     deleteLink.addEventListener('click', function() {
         window.location.href = `/deleteAssessment/${assessment.id}`;
     });
- 
 
     // Append elements to their respective parents
     courseDetails.appendChild(courseCodeLabel);
@@ -107,6 +127,8 @@ assessments.forEach(assessment => {
     assessmentInfo.appendChild(endTime);
     assessmentInfo.appendChild(clashDetectedLabel);
     assessmentInfo.appendChild(clashDetected);
+    assessmentInfo.appendChild(clashRuleLabel);
+    assessmentInfo.appendChild(clashRule);
     actions.appendChild(modifyLink);
     actions.appendChild(deleteLink);
     card.appendChild(courseDetails);

@@ -5,11 +5,10 @@ from App.models import TwoDayRule, OneWeekRuleStrategy
 from App.database import db
 
 
-def add_CourseAsm(courseCode, a_ID, startDate, endDate, startTime, endTime, clashDetected):
-    #Add new Assessment to Course
-    # newAsm = addCourseAsg(courseCode, a_ID, startDate, endDate, startTime, endTime)
-    # return newAsm
+def add_CourseAsm(courseCode, a_ID, startDate, endDate, startTime, endTime, clashDetected, clashRule=None):
     newAsg = CourseAssessment(courseCode, a_ID, startDate, endDate, startTime, endTime, clashDetected)
+    if clashRule:
+        newAsg.clashRule = clashRule
     db.session.add(newAsg)  #add to db
     db.session.commit()
     return newAsg
@@ -51,29 +50,39 @@ def delete_CourseAsm(course_assessment):
 
 def setClashStrategy(assessmentID, strategyName):
     assessment = CourseAssessment.query.get(assessmentID)
-    if assessment:
-        if strategyName == "TwoDayRule":
-            assessment.setClashRule(TwoDayRule())
-            return assessment
-        elif strategyName == "WeekRule":
-            assessment.setClashRule(OneWeekRuleStrategy())
-            return assessment
-        else:
-            return None
-    else:
+    if not assessment:
         return None
+        
+    strategies = {
+        "TwoDayRule": TwoDayRule(),
+        "WeekRule": OneWeekRuleStrategy()
+    }
+    
+    strategy = strategies.get(strategyName)
+    if strategy:
+        assessment.setClashRule(strategy)
+        return assessment
+    return None
 
 def check_clash(assessments, assessmentID):
     assessment = CourseAssessment.query.get(assessmentID)
-    if assessment:
-        if assessment.clashRule == "OneWeekRuleStrategy":
-            rule = OneWeekRuleStrategy()
-            return rule.check_clash(assessment.startDate, assessments)
-        elif assessment.clashRule == "TwoDayRule":
-            rule = TwoDayRule()
-            return rule.check_clash(assessment.startDate, assessments)
-        else:
-            return assessment.clashRule
+    if not assessment:
+        return False
+        
+    # Get the appropriate strategy
+    if not assessment.clashRule:
+        return False
+        
+    strategy = None
+    if assessment.clashRule == "OneWeekRuleStrategy":
+        strategy = OneWeekRuleStrategy()
+    elif assessment.clashRule == "TwoDayRule":
+        strategy = TwoDayRule()
+        
+    if strategy:
+        # Check for clashes against all relevant assessments
+        return strategy.check_clash(assessment.startDate, [a for a in assessments if a.id != assessment.id])
+        
     return False
 
 
