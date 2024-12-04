@@ -250,11 +250,38 @@ def register_staff_action():
         status = request.form.get('status')
         email = request.form.get('email')
         pwd = request.form.get('password')
-         
-        # Field Validation is on HTML Page!
-        register_staff(firstName, lastName, staffID, status, email, pwd)
-        return render_template('login.html')  
-        # return redirect(url_for('staff_views.send_email'))  
+
+        # Basic form validation
+        if not all([firstName, lastName, staffID, status, email, pwd]):
+            flash('All fields are required', 'error')
+            return redirect(url_for('staff_views.get_signup_page'))
+
+        # Email format validation
+        if not '@sta.uwi.edu' in email and not '@my.uwi.edu' in email:
+            flash('Please use a valid UWI email address', 'error')
+            return redirect(url_for('staff_views.get_signup_page'))
+
+        # Staff ID validation
+        try:
+            staffID = int(staffID)
+            if len(str(staffID)) != 8:
+                flash('Staff ID must be 8 digits', 'error')
+                return redirect(url_for('staff_views.get_signup_page'))
+        except ValueError:
+            flash('Staff ID must be numeric', 'error')
+            return redirect(url_for('staff_views.get_signup_page'))
+
+        # Register staff
+        staff, message = register_staff(firstName, lastName, staffID, status, email, pwd)
+        
+        if staff:
+            flash('Registration successful! Please login.', 'success')
+            return redirect(url_for('auth_views.get_login_page'))
+        else:
+            flash(message, 'error')
+            return redirect(url_for('staff_views.get_signup_page'))
+
+    return redirect(url_for('staff_views.get_signup_page'))
     
 # Gets account page
 @staff_views.route('/account', methods=['GET'])

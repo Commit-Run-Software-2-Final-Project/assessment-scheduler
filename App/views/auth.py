@@ -47,12 +47,3 @@ def logout():
     print(email)
     logout_user()
     return render_template('login.html')
-
-# @auth_views.route('/identify')
-# @jwt_required()
-# def identify_view():
-#   email = get_jwt_identity()
-#   user = User.query.filter_by(email=email).first()
-#   if user:
-#     return jsonify(user.to_json())
-#   return jsonify(message='Invalid user'), 403

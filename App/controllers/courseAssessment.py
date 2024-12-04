@@ -86,7 +86,6 @@ def get_CourseAsm_level(level):
     return assessments
 
 def delete_CourseAsm(course_assessment):
-    # Merge the object into the current session if it's detached
     if not db.session.is_active:
         db.session.add(course_assessment)
     else:

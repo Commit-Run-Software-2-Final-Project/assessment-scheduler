@@ -80,7 +80,6 @@ function showFlashMessage() {
   }, 3000);
 }
 
-// Add form submit handler
 saveForm.addEventListener('submit', function(e) {
   e.preventDefault();
   
@@ -102,7 +101,6 @@ saveForm.addEventListener('submit', function(e) {
   })
   .catch(error => {
       console.error('Error:', error);
-      // You could also show an error message here
   });
 });
 

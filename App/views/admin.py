@@ -11,7 +11,8 @@ from App.controllers.course import (
     add_Course,
     list_Courses,
     get_course,
-    delete_Course
+    delete_Course,
+    edit_course
 )
 
 from App.controllers.semester import(
@@ -141,33 +142,69 @@ def get_update_course(courseCode):
 @jwt_required(Admin)
 def update_course():
     if request.method == 'POST':
-        courseCode = request.form.get('code')
-        title = request.form.get('title')
-        description = request.form.get('description')
-        level = request.form.get('level')
-        semester = request.form.get('semester')
-        numAssessments = request.form.get('assessment')
-        # programme = request.form.get('programme')
+        try:
+            courseCode = request.form.get('code')
+            
+            # Validate course exists
+            if not courseCode:
+                flash("No course selected for update", "error")
+                return redirect(url_for('admin_views.get_courses'))
+                
+            title = request.form.get('title')
+            description = request.form.get('description')
+            level = request.form.get('level')
+            semester = request.form.get('semester')
+            numAssessments = request.form.get('assessment')
 
-        delete_Course(get_course(courseCode))
-        add_Course(courseCode, title, description, level, semester, numAssessments)
-        flash("Course Updated Successfully!") 
+            if not all([courseCode, title, description, level, semester, numAssessments]):
+                flash("All fields are required", "error")
+                return redirect(url_for('admin_views.get_update_course', courseCode=courseCode))
 
-    # Redirect to view course listings! 
-    return redirect(url_for('admin_views.get_courses')) 
+            # Check if course exists before updating
+            existing_course = get_course(courseCode)
+            if not existing_course:
+                flash("Course not found", "error")
+                return redirect(url_for('admin_views.get_courses'))
 
-# Selects course and removes it from database
+            course, message = edit_course(courseCode, title, description, level, semester, numAssessments)
+            
+            if course:
+                flash(message, "success")
+            else:
+                flash(message, "error")
+                return redirect(url_for('admin_views.get_update_course', courseCode=courseCode))
+
+        except Exception as e:
+            flash(f"An error occurred: {str(e)}", "error")
+            return redirect(url_for('admin_views.get_update_course', courseCode=courseCode))
+
+    return redirect(url_for('admin_views.get_courses'))
+
 @admin_views.route("/deleteCourse/<string:courseCode>", methods=["POST"])
 @jwt_required(Admin)
 def delete_course_action(courseCode):
+    if not courseCode:
+        flash("Please select a course first", "error")
+        return redirect(url_for('admin_views.get_courses'))
+        
     if request.method == 'POST':
-        course = get_course(courseCode) # Gets selected course
-        delete_Course(course)
-        print(courseCode, " deleted")
-        flash("Course Deleted Successfully!")
-
-    # Redirect to view course listings!   
-    return redirect(url_for('admin_views.get_courses'))    
+        try:
+            course = get_course(courseCode)
+            if not course:
+                flash("Course not found", "error")
+                return redirect(url_for('admin_views.get_courses'))
+                
+            success, message = delete_Course(courseCode)
+            
+            if success:
+                flash(message, "success")
+            else:
+                flash(message, "error")
+                
+        except Exception as e:
+            flash(f"An error occurred while deleting course: {str(e)}", "error")
+            
+    return redirect(url_for('admin_views.get_courses'))
 
 @admin_views.route("/clashes", methods=["GET"])
 @jwt_required(Admin)
