@@ -130,6 +130,7 @@ def test_get_clashes(test_app, session, sample_data):
     with test_app.app_context():
         # Set clashDetected to True
         sample_data["course_assessment"].clashDetected = True
+        db.session.merge(sample_data["course_assessment"])
         db.session.commit()
 
         clashes = get_clashes()
