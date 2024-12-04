@@ -4,27 +4,9 @@ import flask_login
 from flask_jwt_extended import create_access_token, jwt_required, JWTManager, get_jwt_identity, verify_jwt_in_request
 from App.models import User, Admin, Staff, user
 
-
-# def authenticate(email, password):
-#   user = User.query.filter_by(email=email).first()
-#   if user and user.check_password(password):
-#     return user
-#   return None
-
 def setup_jwt(app):
   jwt = JWTManager(app)
 
-  # @jwt.user_identity_loader
-  # def user_identity_lookup(identity):
-  #   user = User.query.filter_by(User.email == identity).one_or_none()
-  #   if user:
-  #     return user.id
-  # return None
-
-  # @jwt.user_lookup_loader
-  # def user_lookup_callback(_jwt_header, jwt_data):
-  #   identity = jwt_data["sub"]
-  # return User.query.get(identity)
 
 def add_auth_context(app):
   @app.context_processor
