@@ -68,11 +68,11 @@ select {
     padding-top: 30px;
 }
 
-.fc-event{
-    border-spacing: 2px;
+.fc-event {
+    margin-bottom: 5px;
+    border-radius: 4px;
     padding: 5px;
-    margin-bottom: 8px;
-    border-radius: 5px;
+    transition: background-color 0.3s ease;
 }
 
 .fc .fc-button-group > .fc-button {
@@ -82,4 +82,26 @@ select {
 
 .fc .fc-button-group > .fc-button.fc-button-active, .fc .fc-button-group > .fc-button:focus, .fc .fc-button-group > .fc-button:hover {
     background-color:#503b9a;
+}
+
+.fc-event:hover {
+    opacity: 0.9;
+}
+
+/* Clash styling */
+.clash-event {
+    background-color: #ff4d4d !important;
+    border-color: #cc0000 !important;
+}
+
+/* No clash styling */
+.no-clash-event {
+    background-color: #4d79ff !important;
+    border-color: #0047b3 !important;
+}
+
+/* Add a warning icon for clashes */
+.clash-event::before {
+    content: "⚠️";
+    margin-right: 4px;
 }

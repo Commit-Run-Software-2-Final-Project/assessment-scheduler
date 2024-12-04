@@ -137,58 +137,69 @@ def format_assessment(item):
 @staff_views.route('/calendar', methods=['POST'])
 @jwt_required()
 def update_calendar_page():
-    # Retrieve data from page
-    id = request.form.get('id')
-    startDate = request.form.get('startDate')
-    startTime = request.form.get('startTime')
-    endDate = request.form.get('endDate')
-    endTime = request.form.get('endTime')
+    try:
+        # Retrieve data from page
+        id = request.form.get('id')
+        startDate = request.form.get('startDate')
+        startTime = request.form.get('startTime')
+        endDate = request.form.get('endDate')
+        endTime = request.form.get('endTime')
 
-    # Get course assessment
-    assessment=get_CourseAsm_id(id)
-    if assessment:
-        assessment.startDate=startDate
-        assessment.endDate=endDate
-        assessment.startTime=startTime
-        assessment.endTime=endTime
+        # Get course assessment
+        assessment = get_CourseAsm_id(id)
+        if not assessment:
+            return jsonify({'error': 'Assessment not found'}), 404
+
+        # Update assessment dates/times
+        assessment.startDate = datetime.strptime(startDate, '%Y-%m-%d').date()
+        assessment.endDate = datetime.strptime(endDate, '%Y-%m-%d').date()
+        assessment.startTime = datetime.strptime(startTime, '%H:%M:%S').time()
+        assessment.endTime = datetime.strptime(endTime, '%H:%M:%S').time()
+
+        # Validate dates
+        if assessment.startDate > assessment.endDate:
+            return jsonify({'error': 'End date cannot be before start date'}), 400
 
         db.session.commit()
         
-        clash=detect_clash(assessment.id)
-        if clash:
-            assessment.clashDetected = True
-            db.session.commit()
-            # session['message'] = assessment.courseCode+" - Clash detected! The maximum amount of assessments for this level has been exceeded."
-        else:
-            session['message'] = "Assessment modified"
-    return session['message']
+        # Check for clashes after update
+        clash = detect_clash(assessment.id)
+        assessment.clashDetected = clash
+        db.session.commit()
 
+        return jsonify({
+            'message': 'Assessment updated successfully',
+            'clashDetected': clash,
+            'assessment': assessment.to_json()
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 def detect_clash(id):
     assessment = get_CourseAsm_id(id)
-    if not assessment or not assessment.endDate:  # dates not set yet
+    if not assessment or not assessment.endDate:
         return False
         
-    compare_code = assessment.courseCode.replace(' ','')
+    compare_code = assessment.courseCode.replace(' ', '')
     all_assessments = CourseAssessment.query.filter(
-        not_(CourseAssessment.a_ID.in_([2, 4, 8]))  # Exclude certain assessment types
+        CourseAssessment.courseCode.like(f'%{compare_code[4]}%'),  # Same level
+        CourseAssessment.id != assessment.id,  # Not the same assessment
+        CourseAssessment.startDate.isnot(None),  # Has dates set
+        CourseAssessment.endDate.isnot(None),
+        ~CourseAssessment.a_ID.in_([2, 4, 8])  # Exclude certain types
     ).all()
     
-    relevant_assessments = []
-    for a in all_assessments:
-        code = a.courseCode.replace(' ','')
-        # Check if courses are in the same level and not the same assessment
-        if (code[4] == compare_code[4]) and (a.id != assessment.id):
-            if a.startDate is not None:  # assessment has been scheduled
-                relevant_assessments.append(a)
+    if not all_assessments:  # No other assessments to clash with
+        return False
 
     # Get the clash rule strategy
     clash_rule = assessment.getClashRule()
     if not clash_rule:
-        # Default to TwoDayRule if none set
-        clash_rule = TwoDayRule()
+        clash_rule = TwoDayRule()  # Default rule
         
-    return clash_rule.check_clash(assessment.startDate, relevant_assessments)
+    return clash_rule.check_clash(assessment.startDate, all_assessments)
 
 def get_week_range(iso_date_str):
     date_obj = date.fromisoformat(iso_date_str)
@@ -349,7 +360,7 @@ def add_assessments_action():
             newAsm.clashDetected = True
             db.session.commit()
             # flash("Clash detected based on selected rule! Please review the assessment dates.")
-            time.sleep(1)
+            #time.sleep(1)
 
     return redirect(url_for('staff_views.get_assessments_page'))
     
