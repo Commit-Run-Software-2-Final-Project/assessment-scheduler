@@ -48,20 +48,20 @@ def app_context(test_app):
 def test_user():
     """Fixture for creating a test user."""
     return User(u_ID=TEST_USER["u_ID"], email=TEST_USER["email"], password=TEST_USER["password"])
-
+@pytest.mark.unit
 def test_user_password_hashing(test_user):
     """Test password hashing and checking."""
     assert test_user.password != TEST_USER["password"]  # Ensure the password is hashed
     assert test_user.check_password(TEST_USER["password"])  # Ensure the password check works
     assert not test_user.check_password("wrongpassword")  # Ensure wrong passwords fail
-
+@pytest.mark.unit
 def test_user_to_json(test_user):
     """Test the `to_json` method."""
     user_json = test_user.to_json()
     assert user_json["u_ID"] == TEST_USER["u_ID"]
     assert user_json["email"] == TEST_USER["email"]
     assert "password" in user_json
-
+@pytest.mark.unit
 def test_user_str(test_user):
     """Test the `__str__` method."""
     assert str(test_user) == f"Staff(id={TEST_USER['u_ID']}, email={TEST_USER['email']})"
@@ -87,7 +87,7 @@ def setup_app(test_app):
     yield test_app
     with test_app.app_context():
         db.drop_all()
-
+@pytest.mark.integration
 def test_validate_Staff(setup_app):
     """Test validating staff user."""
     staff = validate_Staff("staff@example.com", "staffpassword")
@@ -96,7 +96,7 @@ def test_validate_Staff(setup_app):
 
     invalid_staff = validate_Staff("staff@example.com", "wrongpassword")
     assert invalid_staff is None
-
+@pytest.mark.integration
 def test_validate_Admin(setup_app):
     """Test validating admin user."""
     admin = validate_Admin("admin@example.com", "adminpassword")
@@ -105,7 +105,7 @@ def test_validate_Admin(setup_app):
 
     invalid_admin = validate_Admin("admin@example.com", "wrongpassword")
     assert invalid_admin is None
-
+@pytest.mark.integration
 def test_get_user(setup_app):
     """Test retrieving a user."""
     staff = get_user("staff@example.com", "staffpassword")
@@ -118,7 +118,7 @@ def test_get_user(setup_app):
 
     invalid_user = get_user("nonexistent@example.com", "password")
     assert invalid_user is None
-
+@pytest.mark.integration
 def test_get_uid(setup_app):
     """Test retrieving user ID by email."""
     uid = get_uid("staff@example.com")

@@ -37,6 +37,7 @@ def session(test_app, _db):
 # App/tests/test_course.py
 
 
+@pytest.mark.unit
 def test_add_course_new(test_app, session):
     """Test adding a completely new course"""
     with test_app.app_context():
@@ -52,6 +53,7 @@ def test_add_course_new(test_app, session):
         retrieved_course = Course.query.get("COMP3613")
         assert retrieved_course is not None
 
+@pytest.mark.unit
 def test_add_course_existing(test_app, session):
     """Test adding a course that already exists"""
     with test_app.app_context():
@@ -66,6 +68,7 @@ def test_add_course_existing(test_app, session):
         # Verify the returned course is the same as the initial course
         assert returned_course.courseCode == initial_course.courseCode
 
+@pytest.mark.unit
 def test_list_courses(test_app, session):
     """Test listing all courses"""
     with test_app.app_context():
@@ -79,6 +82,7 @@ def test_list_courses(test_app, session):
         # Verify the number of courses
         assert len(courses) >= 2
 
+@pytest.mark.unit
 def test_get_course(test_app, session):
     """Test retrieving a specific course"""
     with test_app.app_context():
@@ -94,6 +98,7 @@ def test_get_course(test_app, session):
         assert course.courseCode == "COMP3613"
         assert course.courseTitle == "Software Engineering II"
         
+@pytest.mark.unit
 def test_course_to_json():
     """Test the to_json method of the Course model"""
     course = Course("COMP3613", "Software Engineering II", "Basics of software engineering", 3, 1, 0)
@@ -111,6 +116,7 @@ def test_course_to_json():
 Integration tests
 '''
 
+@pytest.mark.integration
 def test_integration_add_and_get_course(test_app, session):
     """Integration test for adding and retrieving a course"""
     with test_app.app_context():
@@ -126,6 +132,7 @@ def test_integration_add_and_get_course(test_app, session):
         assert retrieved_course.courseTitle == "Software Engineering II"
 
 
+@pytest.mark.integration
 def test_integration_add_and_list_courses(test_app, session):
     """Integration test for adding multiple courses and listing them"""
     with test_app.app_context():
@@ -142,7 +149,7 @@ def test_integration_add_and_list_courses(test_app, session):
         assert "COMP3603" in course_codes
 
 
-
+@pytest.mark.integration
 def test_delete_course(test_app, session):
     """Test deleting a course"""
     with test_app.app_context():
@@ -161,6 +168,7 @@ def test_delete_course(test_app, session):
         deleted_course = Course.query.get("COMP3613")
         assert deleted_course is None
 
+@pytest.mark.integration
 def test_delete_nonexistent_course(test_app, session):
     """Test deleting a course that does not exist"""
     with test_app.app_context():
@@ -168,6 +176,7 @@ def test_delete_nonexistent_course(test_app, session):
         non_existent = Course.query.get("NONEXIST")
         assert non_existent is None
 
+@pytest.mark.integration
 def test_add_course_invalid_data(test_app, session):
     """Test adding a course with missing or invalid data"""
     with test_app.app_context():

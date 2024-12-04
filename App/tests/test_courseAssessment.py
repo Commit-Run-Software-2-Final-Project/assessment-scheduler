@@ -56,6 +56,7 @@ def sample_data(session):
     db.drop_all()
 
 
+@pytest.mark.unit
 def test_add_course_assessment(test_app, session):
     """Test adding a new CourseAssessment."""
     with test_app.app_context():
@@ -68,6 +69,7 @@ def test_add_course_assessment(test_app, session):
         assert new_course_assessment.startDate == date(2024, 12, 3)
 
 
+@pytest.mark.unit
 def test_list_assessments(test_app, session, sample_data):
     """Test listing all assessments."""
     with test_app.app_context():
@@ -76,6 +78,7 @@ def test_list_assessments(test_app, session, sample_data):
         assert assessments[0].category == Category.ASSIGNMENT
 
 
+@pytest.mark.unit
 def test_get_assessment_id(test_app, session, sample_data):
     """Test retrieving assessment ID by category."""
     with test_app.app_context():
@@ -83,6 +86,7 @@ def test_get_assessment_id(test_app, session, sample_data):
         assert assessment_id == 1
 
 
+@pytest.mark.unit
 def test_get_assessment_type(test_app, session, sample_data):
     """Test retrieving assessment category by ID."""
     with test_app.app_context():
@@ -90,7 +94,7 @@ def test_get_assessment_type(test_app, session, sample_data):
         assert assessment_type == "ASSIGNMENT"
 
 
-
+@pytest.mark.unit
 def test_get_course_assessment_by_id(test_app, session, sample_data):
     """Test retrieving a CourseAssessment by ID."""
     with test_app.app_context():
@@ -99,6 +103,7 @@ def test_get_course_assessment_by_id(test_app, session, sample_data):
         assert course_assessment.courseCode == "COMP3607"
 
 
+@pytest.mark.unit
 def test_get_course_assessment_by_code(test_app, session, sample_data):
     """Test retrieving CourseAssessments by course code."""
     with test_app.app_context():
@@ -107,6 +112,7 @@ def test_get_course_assessment_by_code(test_app, session, sample_data):
         assert assessments[0].courseCode == "COMP3607"
 
 
+@pytest.mark.unit
 def test_delete_course_assessment(test_app, session, sample_data):
     """Test deleting a CourseAssessment."""
     with test_app.app_context():
@@ -124,7 +130,7 @@ def test_delete_course_assessment(test_app, session, sample_data):
         assert deleted is None
 
 
-
+@pytest.mark.unit
 def test_get_clashes(test_app, session, sample_data):
     """Test retrieving CourseAssessments with clashes."""
     with test_app.app_context():
@@ -137,42 +143,52 @@ def test_get_clashes(test_app, session, sample_data):
         assert len(clashes) == 1
         assert clashes[0].clashDetected is True
 
+
+@pytest.mark.unit
 def test_setClashRule(test_app, session, sample_data):
-    """"Test setting clash strategy"""
+    """Test setting clash strategy"""
     with test_app.app_context():
         sample_data["course_assessment"].setClashRule(TwoDayRule())
         assert sample_data["course_assessment"].clashRule == "TwoDayRule"
 
+
+@pytest.mark.unit
 def test_getClashRule(test_app, session, sample_data):
     """Test Getting Clash Rule"""
     with test_app.app_context():
         sample_data["course_assessment"].clashRule = "TwoDayRule"
         assert isinstance(sample_data["course_assessment"].getClashRule(), TwoDayRule)
 
+
+@pytest.mark.unit
 def test_setClashStrategy(test_app, session, sample_data):
     """Test setting clash strategy with controller"""
     with test_app.app_context():
         course_assessment = setClashStrategy(1, "WeekRule")
         assert course_assessment.clashRule == "OneWeekRuleStrategy"
 
+
+@pytest.mark.unit
 def test_check_clash(test_app, session, sample_data):
+    """Test checking for clash in course assessments"""
     with test_app.app_context():
         sample_data["course_assessment"].clashRule = "TwoDayRule"
         course_assessment = sample_data["course_assessment"]
         course_assessment.clashRule = "TwoDayRule"
         db.session.merge(course_assessment)
         assessments = [
-    MockAssessment(date(2024, 12, 1)),
-    MockAssessment(date(2024, 12, 5)),
-    MockAssessment(date(2024, 12, 8)),
-]
+            MockAssessment(date(2024, 12, 1)),
+            MockAssessment(date(2024, 12, 5)),
+            MockAssessment(date(2024, 12, 8)),
+        ]
         assert check_clash(assessments, 1) == True
+        
         assessments = [
-    MockAssessment(date(2024, 12, 4)),
-    MockAssessment(date(2024, 12, 5)),
-    MockAssessment(date(2024, 12, 8)),
-]
-        assert check_clash(assessments, 1) == False   
+            MockAssessment(date(2024, 12, 4)),
+            MockAssessment(date(2024, 12, 5)),
+            MockAssessment(date(2024, 12, 8)),
+        ]
+        assert check_clash(assessments, 1) == False
 
 
 
@@ -205,6 +221,7 @@ def setup_data(test_app):
         db.drop_all()
 
 
+@pytest.mark.integration
 def test_full_course_assessment_lifecycle(test_app, setup_data):
     """Test the full lifecycle of a CourseAssessment."""
     with test_app.app_context():

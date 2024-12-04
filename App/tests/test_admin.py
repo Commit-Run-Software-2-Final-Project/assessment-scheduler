@@ -19,6 +19,7 @@ def mock_admin_class(mocker):
     """Mock the Admin class."""
     return mocker.patch('App.models.admin.Admin')
 
+@pytest.mark.unit
 def test_login_success(mock_db_session, mock_admin_class):
     mock_admin = MagicMock()
     mock_admin.check_password.return_value = True
@@ -35,6 +36,7 @@ def test_login_success(mock_db_session, mock_admin_class):
     mock_admin.check_password.assert_called_once_with("securepassword")
     mock_admin.login.assert_called_once()
 
+@pytest.mark.unit
 def test_login_failure_incorrect_email(mock_db_session, mock_admin_class):
     mock_db_session.query.return_value.filter.return_value.first.return_value = None
 
@@ -42,6 +44,7 @@ def test_login_failure_incorrect_email(mock_db_session, mock_admin_class):
     
     assert result == "Login failed"
 
+@pytest.mark.unit
 def test_login_failure_incorrect_password(mock_db_session, mock_admin_class):
     mock_admin = MagicMock()
     mock_admin.check_password.return_value = False
@@ -60,6 +63,7 @@ Integration Tests
 '''
 
 
+@pytest.mark.integration
 def test_login_admin_success(test_app, client):
     # Arrange: Add an admin to the database
     with test_app.app_context():
@@ -73,9 +77,10 @@ def test_login_admin_success(test_app, client):
     response = client.post('/login', data=dict(email="admin@example.com", password="securepassword"))
     
     # Assert: Check the result
-    assert response.status_code == 302 
+    assert response.status_code == 302
     assert response.location == '/semester'  
-    
+
+@pytest.mark.integration
 def test_login_admin_failure_incorrect_email(test_app):
     # Arrange: Add an admin to the database
     with test_app.app_context():
@@ -91,6 +96,7 @@ def test_login_admin_failure_incorrect_email(test_app):
     # Assert: Check the result
     assert result == "Login failed"
 
+@pytest.mark.integration
 def test_login_admin_failure_incorrect_password(test_app):
     # Arrange: Add an admin to the database
     with test_app.app_context():
