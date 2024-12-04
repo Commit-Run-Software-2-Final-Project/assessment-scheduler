@@ -58,43 +58,52 @@ function setExistingCourses() {
     courseCodesInput.value = JSON.stringify(myCourses);
   });
 }
-
-const flashMessage = document.createElement('div');
-flashMessage.className = 'flash-message';
-flashMessage.innerHTML = `
-    <span>Courses saved successfully!</span>
-`;
-document.body.appendChild(flashMessage);
+function showFlashMessage() {
+  const flashMessage = document.createElement('div');
+  flashMessage.className = 'flash-message';
+  flashMessage.innerHTML = `
+      <span>Courses saved successfully! Redirecting...</span>
+  `;
+  document.body.appendChild(flashMessage);
+  
+  // Add the show class to trigger the fade in
+  setTimeout(() => {
+      flashMessage.classList.add('show');
+  }, 100);
+  
+  // Remove the message after 3 seconds
+  setTimeout(() => {
+      flashMessage.classList.remove('show');
+      setTimeout(() => {
+          flashMessage.remove();
+      }, 300); // Wait for fade out animation
+  }, 3000);
+}
 
 // Add form submit handler
 saveForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    // Submit the form using fetch
-    fetch('/account', {
-        method: 'POST',
-        body: new FormData(this)
-    })
-    .then(response => {
-        if (response.ok) {
-            // Show success message
-            flashMessage.classList.add('show');
-            
-            // Hide message after 3 seconds
-            setTimeout(() => {
-                flashMessage.classList.remove('show');
-            }, 3000);
-            
-            // Optional: Redirect after saving
-            setTimeout(() => {
-                window.location.href = '/assessments';
-            }, 1500);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        // You could also show an error message here
-    });
+  e.preventDefault();
+  
+  // Submit the form using fetch
+  fetch('/account', {
+      method: 'POST',
+      body: new FormData(this)
+  })
+  .then(response => {
+      if (response.ok) {
+          // Show success message
+          showFlashMessage();
+          
+          // Redirect after saving
+          setTimeout(() => {
+              window.location.href = '/assessments';
+          }, 1500);
+      }
+  })
+  .catch(error => {
+      console.error('Error:', error);
+      // You could also show an error message here
+  });
 });
 
 // Initialize

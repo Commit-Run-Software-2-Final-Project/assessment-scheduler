@@ -255,11 +255,15 @@ def get_selected_courses():
             for code in course_codes:
                 obj = add_CourseStaff(id, code)
             
+            # Return success response with status code 200
             return jsonify({'message': 'Courses saved successfully'}), 200
         except Exception as e:
+            # Return error response with status code 400
             return jsonify({'error': str(e)}), 400
         
     return jsonify({'error': 'Invalid request'}), 400
+
+
 # Gets assessments page
 @staff_views.route('/assessments', methods=['GET'])
 @jwt_required()

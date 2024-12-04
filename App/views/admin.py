@@ -47,13 +47,27 @@ def index():
 @jwt_required(Admin)
 def new_semester_action():
     if request.method == 'POST':
-        semBegins = request.form.get('teachingBegins')
-        semEnds = request.form.get('teachingEnds')
-        semChoice = request.form.get('semester')
-        add_sem(semBegins,semEnds,semChoice)
+        try:
+            # Get form data
+            semBegins = request.form.get('teachingBegins')
+            semEnds = request.form.get('teachingEnds')
+            semChoice = request.form.get('semester')
+            
+            # Additional server-side validation
+            if not all([semBegins, semEnds, semChoice]):
+                flash('All fields are required')
+                return redirect(url_for('admin_views.get_upload_page'))
+                
+            # Create new semester
+            add_sem(semBegins, semEnds, semChoice)
+            flash('Semester details saved successfully')
+            return render_template('uploadFiles.html')
+            
+        except Exception as e:
+            flash(f'Error: {str(e)}')
+            return redirect(url_for('admin_views.get_upload_page'))
 
-        # Return course upload page to upload cvs file for courses offered that semester
-        return render_template('uploadFiles.html')  
+    return redirect(url_for('admin_views.get_upload_page'))
 
 # Gets csv file with course listings, parses it to store course data and stores it in application
 @admin_views.route('/uploadcourse', methods=['POST'])
