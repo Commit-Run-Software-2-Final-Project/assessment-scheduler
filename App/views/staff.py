@@ -179,10 +179,10 @@ def update_calendar_page():
 
 def detect_clash(id):
     assessment = get_CourseAsm_id(id)
-    if not assessment or not assessment.endDate:
+    if not assessment or not assessment.endDate:  # dates not set yet
         return False
         
-    compare_code = assessment.courseCode.replace(' ', '')
+    compare_code = assessment.courseCode.replace(' ','')
     all_assessments = CourseAssessment.query.filter(
         CourseAssessment.courseCode.like(f'%{compare_code[4]}%'),  # Same level
         CourseAssessment.id != assessment.id,  # Not the same assessment
@@ -191,15 +191,28 @@ def detect_clash(id):
         ~CourseAssessment.a_ID.in_([2, 4, 8])  # Exclude certain types
     ).all()
     
-    if not all_assessments:  # No other assessments to clash with
-        return False
-
     # Get the clash rule strategy
     clash_rule = assessment.getClashRule()
     if not clash_rule:
         clash_rule = TwoDayRule()  # Default rule
+
+    # Check if current assessment clashes with others
+    has_clash = clash_rule.check_clash(assessment.startDate, all_assessments)
+    assessment.clashDetected = has_clash
+
+    # Update ALL assessments of the same level, whether there's a clash or not
+    for other_assessment in all_assessments:
+        # Remove current assessment from clash check list
+        remaining_assessments = [a for a in all_assessments if a.id != other_assessment.id]
+        # Add the moved assessment to the check list
+        remaining_assessments.append(assessment)
         
-    return clash_rule.check_clash(assessment.startDate, all_assessments)
+        # Check if this assessment clashes with any others
+        other_clash = clash_rule.check_clash(other_assessment.startDate, remaining_assessments)
+        other_assessment.clashDetected = other_clash
+
+    db.session.commit()
+    return has_clash
 
 def get_week_range(iso_date_str):
     date_obj = date.fromisoformat(iso_date_str)
