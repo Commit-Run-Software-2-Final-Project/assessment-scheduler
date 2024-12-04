@@ -13,6 +13,7 @@ from flask_jwt_extended import current_user as jwt_current_user, get_jwt_identit
 from flask_jwt_extended import jwt_required
 from datetime import date, timedelta
 import time
+from datetime import datetime
 
 from App.controllers.staff import (
     register_staff,
@@ -338,7 +339,7 @@ def get_modify_assessments_page(id):
 @staff_views.route('/modifyAssessment/<string:id>', methods=['POST'])
 def modify_assessment(id):
     if request.method=='POST':
-        #get form details
+        # Get form details
         course = request.form.get('myCourses')
         asmType = request.form.get('AssessmentType')
         startDate = request.form.get('startDate')
@@ -346,19 +347,31 @@ def modify_assessment(id):
         startTime = request.form.get('startTime')
         endTime = request.form.get('endTime')
 
-        #update record
-        assessment=get_CourseAsm_id(id)
+        # Update record
+        assessment = get_CourseAsm_id(id)
         if assessment:
-            assessment.a_ID=asmType
-            if startDate!='' and endDate!='' and startTime!='' and endTime!='':
-                assessment.startDate=startDate
-                assessment.endDate=endDate
-                assessment.startTime=startTime
-                assessment.endTime=endTime
+            assessment.a_ID = asmType
+            if startDate != '' and endDate != '' and startTime != '' and endTime != '':
+                # Convert date strings to Python date objects
+                assessment.startDate = datetime.strptime(startDate, '%Y-%m-%d').date()
+                assessment.endDate = datetime.strptime(endDate, '%Y-%m-%d').date()
+                
+                # Convert time strings to Python time objects using HH:MM:SS format
+                try:
+                    assessment.startTime = datetime.strptime(startTime, '%H:%M:%S').time()
+                except ValueError:
+                    # If time doesn't include seconds, try HH:MM format
+                    assessment.startTime = datetime.strptime(startTime, '%H:%M').time()
+
+                try:
+                    assessment.endTime = datetime.strptime(endTime, '%H:%M:%S').time()
+                except ValueError:
+                    # If time doesn't include seconds, try HH:MM format
+                    assessment.endTime = datetime.strptime(endTime, '%H:%M').time()
 
             db.session.commit()
-
-            clash=detect_clash(assessment.id)
+            
+            clash = detect_clash(assessment.id)
             if clash:
                 assessment.clashDetected = True
                 db.session.commit()
