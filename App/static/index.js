@@ -9,7 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
     Presentation: "#cc7a50",
     Other: "#C29203",
     Pending: "#999999",
-    Clash: "#ff4d4d"  // New color for clash detection
+    Clash: "#ff4d4d",      // Red for clashes
+    NoClash: "#4d79ff"     // Blue for no clashes
   }
 
   const calendarEvents = [];
@@ -96,12 +97,9 @@ document.addEventListener('DOMContentLoaded', function() {
       if (a.courseCode == course) {
         const eventEl = document.createElement('div');
         eventEl.classList.add('fc-event', 'fc-h-event', 'fc-daygrid-event', 'fc-daygrid-block-event');
-
-        const typeOfAssessment = getTypeOfAssessment(a.a_ID);
-        var color = colors[typeOfAssessment];
-        if (a.clashDetected) {
-          color = colors.Clash; // Use clash color instead of pending
-        }
+    
+        // Set color based on clash status
+        const color = a.clashDetected ? colors.Clash : colors.NoClash;
         eventEl.dataset.color = color;
         eventEl.style.backgroundColor = color;
         
@@ -113,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
             clashDetected: a.clashDetected
           }
         };
-
+    
         if (a.startDate && a.endDate) {
           const isFullDay = a.startTime === '00:00:00' && (a.endTime === '23:59:00' || a.endTime === '00:00:00');
           eventObj.start = a.startDate + 'T' + a.startTime;
@@ -181,9 +179,17 @@ document.addEventListener('DOMContentLoaded', function() {
       arg.draggedEl.parentNode.removeChild(arg.draggedEl);
     },
     eventDidMount: function(info) {
-      // Add tooltip for clash information
-      if (info.event.extendedProps && info.event.extendedProps.clashDetected) {
+      const event = info.event;
+      const clashDetected = event.extendedProps.clashDetected;
+      
+      // Set color based on clash status
+      if (clashDetected) {
+        info.el.style.backgroundColor = colors.Clash;
+        info.el.style.borderColor = colors.Clash;
         info.el.title = 'Warning: Assessment clash detected';
+      } else {
+        info.el.style.backgroundColor = colors.NoClash;
+        info.el.style.borderColor = colors.NoClash;
       }
     }
   });
@@ -213,21 +219,17 @@ function toEditItem(event) {
           endTime: eTime
       },
       success: function(response) {
-          // Update event color based on clash status
-          event.setProp('backgroundColor', response.clashDetected ? colors.Clash : getTypeColor(event));
-          // Only reload if there was an error
-          if (response.error) {
-              location.reload();
-          }
+          showRefreshMessage();
       },
       error: function(xhr, status, error) {
           console.error('Error:', error);
-          location.reload();
+          if (xhr.responseJSON && xhr.responseJSON.error) {
+              alert(xhr.responseJSON.error);
+          }
       }
   });
 }
 
-// Update newItem function similarly
 function newItem(event) {
   const id = event.draggedEl.dataset.eventId;
   const sDate = formatDate(new Date(event.date));
@@ -251,21 +253,56 @@ function newItem(event) {
           endTime: eTime
       },
       success: function(response) {
-          if (response.error) {
-              location.reload();
-          } else {
-              // Update the event's appearance without reloading
-              const fcEvent = calendar.getEventById(id);
-              if (fcEvent) {
-                  fcEvent.setProp('backgroundColor', response.clashDetected ? colors.Clash : getTypeColor(fcEvent));
-              }
-          }
+          showRefreshMessage();
       },
       error: function(xhr, status, error) {
           console.error('Error:', error);
-          location.reload();
+          if (xhr.responseJSON && xhr.responseJSON.error) {
+              alert(xhr.responseJSON.error);
+          }
       }
   });
+}
+
+// Add this new function for the flash message
+function showRefreshMessage() {
+  // Create flash message element if it doesn't exist
+  let flashMessage = document.getElementById('flashMessage');
+  if (!flashMessage) {
+      flashMessage = document.createElement('div');
+      flashMessage.id = 'flashMessage';
+      document.body.appendChild(flashMessage);
+  }
+
+  // Style and show the message
+  flashMessage.innerHTML = 'Please refresh the page to see updated clash status';
+  flashMessage.style.cssText = `
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #674ECC;
+      color: white;
+      padding: 15px 30px;
+      border-radius: 6px;
+      font-size: 16px;
+      z-index: 1000;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: opacity 0.3s ease-in-out;
+  `;
+
+  // Show the message
+  flashMessage.style.opacity = '1';
+
+  // Hide the message after 3 seconds
+  setTimeout(() => {
+      flashMessage.style.opacity = '0';
+      setTimeout(() => {
+          if (flashMessage.parentNode) {
+              flashMessage.parentNode.removeChild(flashMessage);
+          }
+      }, 300); // Remove after fade out
+  }, 3000);
 }
 
 function formatDate(dateObj) {
