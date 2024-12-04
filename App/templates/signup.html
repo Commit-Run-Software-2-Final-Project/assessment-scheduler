@@ -52,7 +52,12 @@
         </div>
         <div class="field_containers">
             <label for="email" class="input-label">Email</label><br>
-            <input type="email" id="email" name="email" required>
+            <input type="email" 
+                   id="email" 
+                   name="email" 
+                   pattern="^[a-zA-Z0-9._%+-]+@(?:sta\.uwi\.edu|my\.uwi\.edu)$"
+                   title="Please enter a valid UWI email address (@sta.uwi.edu or @my.uwi.edu)"
+                   required>
         </div>
         <div class="field_containers">
             <label for="password" class="input-label">Password</label><br>

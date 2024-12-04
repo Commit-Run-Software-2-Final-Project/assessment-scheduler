@@ -163,30 +163,6 @@ def update_calendar_page():
             session['message'] = "Assessment modified"
     return session['message']
 
-# def detect_clash(id):
-#     clash=0
-#     sem=Semester.query.order_by(Semester.id.desc()).first() #get the weekly max num of assessments allowed per level
-#     max=sem.maxAssessments
-#     new_assessment=get_CourseAsm_id(id)                     #get current assessment info
-#     compare_code=new_assessment.courseCode.replace(' ','')
-#     all_assessments = CourseAssessment.query.filter(not_(CourseAssessment.a_ID.in_([2, 4, 8]))).all()
-#     if not new_assessment.endDate: #dates not set yet
-#         return False
-#     relevant_assessments=[]
-#     for a in all_assessments:
-#         code=a.courseCode.replace(' ','')
-#         if (code[4]==compare_code[4]) and (a.id!=new_assessment.id): #course are in the same level
-#             if a.startDate is not None: #assessment has been scheduled
-#                 relevant_assessments.append(a)
-
-#     sunday,saturday=get_week_range(new_assessment.endDate.isoformat())
-#     for a in relevant_assessments:
-#         dueDate=a.endDate
-#         if sunday <= dueDate <= saturday:
-#             clash=clash+1
-
-#     return clash>=max
-
 
 def detect_clash(id):
     assessment = get_CourseAsm_id(id)
@@ -368,7 +344,7 @@ def add_assessments_action():
         if clash:
             newAsm.clashDetected = True
             db.session.commit()
-            flash("Clash detected based on selected rule! Please review the assessment dates.")
+            # flash("Clash detected based on selected rule! Please review the assessment dates.")
             time.sleep(1)
 
     return redirect(url_for('staff_views.get_assessments_page'))
@@ -421,7 +397,7 @@ def modify_assessment(id):
             if clash:
                 assessment.clashDetected = True
                 db.session.commit()
-                flash("Clash detected! The maximum amount of assessments for this level has been exceeded.")
+                # flash("Clash detected! The maximum amount of assessments for this level has been exceeded.")
                 time.sleep(1)
 
     return redirect(url_for('staff_views.get_assessments_page'))
