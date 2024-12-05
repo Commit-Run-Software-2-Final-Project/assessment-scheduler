@@ -3,15 +3,28 @@ from App.models import Staff, CourseStaff
 from App.database import db
 
 def register_staff(firstName, lastName, u_ID, status, email, pwd):
-    #Check if email is already used by another lecturer ie. lecturer already registered
-    staff = db.session.query(Staff).filter(Staff.email == email).count()
+    # Check if any required field is empty
+    if not all([firstName, lastName, u_ID, status, email, pwd]):
+        return None, "All fields are required"
+        
+    # Check if email already exists
+    staff_email = db.session.query(Staff).filter(Staff.email == email).first()
+    if staff_email:
+        return None, "Email already registered"
 
-    if staff == 0:
+    # Check if staff ID already exists
+    staff_id = db.session.query(Staff).filter(Staff.u_ID == u_ID).first()
+    if staff_id:
+        return None, "Staff ID already registered"
+
+    try:
         newLect = Staff(firstName, lastName, u_ID, status, email, pwd)
         db.session.add(newLect)
         db.session.commit()
-        return newLect
-    return None
+        return newLect, "Registration successful"
+    except Exception as e:
+        db.session.rollback()
+        return None, f"Registration failed: {str(e)}"
 
 def login_staff(email, password):
     staff = db.session.query(Staff).filter(Staff.email==email).first()

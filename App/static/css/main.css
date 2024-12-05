@@ -103,21 +103,78 @@ html{
     color: white;
 }
 
-.flash-message{
-    background-color: var(--tertiary-color);
-    position: absolute;
-    top: 50%;
+.flash-message {
+    position: fixed;
+    top: 20px;
     left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 100;
-    padding: 1rem 1.5rem;
+    transform: translateX(-50%);
+    background-color: var(--tertiary-color);
+    color: white;
+    padding: 12px 24px;
     border-radius: 6px;
+    z-index: 1000;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border: solid rgb(202, 202, 202) 1px;
+    min-width: 300px;
+    max-width: 600px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    animation: slideDown 0.3s ease forwards;
 }
 
+@keyframes slideDown {
+    0% {
+        transform: translate(-50%, -100%);
+        opacity: 0;
+    }
+    100% {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+}
+
+.flash-message.hiding {
+    animation: slideUp 0.3s ease forwards;
+}
+
+@keyframes slideUp {
+    0% {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -100%);
+        opacity: 0;
+    }
+}
+
+.flash-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.message {
+    flex-grow: 1;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0 0 0 12px;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+}
+
+.close-button:hover {
+    opacity: 1;
+}
 .hiddenFlashMsg{
     opacity: 0;
     transition: opacity  0.25s ease;
@@ -140,6 +197,63 @@ html{
 .close-btn:hover{
     color: #cac7c7;
 }
+
+.sem_container {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.sem_container input[type="radio"] {
+    display: none;
+}
+
+.sem_container > .input-label {
+    margin-right: 10px;
+    font-size: 16px;
+    font-weight: 500;
+    /* Remove any border/background styling */
+    border: none;
+    background: none;
+    width: auto;
+    height: auto;
+}
+
+.sem_container input[type="radio"] + label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--tertiary-color);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.sem_container input[type="radio"]:checked + label {
+    background-color: var(--tertiary-color);
+    color: white;
+    transform: scale(1.05);
+}
+
+.sem_container input[type="radio"] + label:hover {
+    background-color: rgba(103, 78, 204, 0.1);
+}
+
+.sem_container label:hover {
+    background-color: rgba(103, 78, 204, 0.1);
+}
+
+/* Adjust spacing for the semester label */
+.sem_container .input-label {
+    margin-right: 10px;
+    font-size: 16px;
+}
+
 
 @media screen and (min-width: 900px){
 

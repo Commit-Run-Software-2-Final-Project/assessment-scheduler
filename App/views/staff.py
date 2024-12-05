@@ -13,6 +13,8 @@ from flask_jwt_extended import current_user as jwt_current_user, get_jwt_identit
 from flask_jwt_extended import jwt_required
 from datetime import date, timedelta
 import time
+from datetime import datetime
+from App.controllers.courseAssessment import *
 
 from App.controllers.staff import (
     register_staff,
@@ -135,55 +137,82 @@ def format_assessment(item):
 @staff_views.route('/calendar', methods=['POST'])
 @jwt_required()
 def update_calendar_page():
-    # Retrieve data from page
-    id = request.form.get('id')
-    startDate = request.form.get('startDate')
-    startTime = request.form.get('startTime')
-    endDate = request.form.get('endDate')
-    endTime = request.form.get('endTime')
+    try:
+        # Retrieve data from page
+        id = request.form.get('id')
+        startDate = request.form.get('startDate')
+        startTime = request.form.get('startTime')
+        endDate = request.form.get('endDate')
+        endTime = request.form.get('endTime')
 
-    # Get course assessment
-    assessment=get_CourseAsm_id(id)
-    if assessment:
-        assessment.startDate=startDate
-        assessment.endDate=endDate
-        assessment.startTime=startTime
-        assessment.endTime=endTime
+        # Get course assessment
+        assessment = get_CourseAsm_id(id)
+        if not assessment:
+            return jsonify({'error': 'Assessment not found'}), 404
+
+        # Update assessment dates/times
+        assessment.startDate = datetime.strptime(startDate, '%Y-%m-%d').date()
+        assessment.endDate = datetime.strptime(endDate, '%Y-%m-%d').date()
+        assessment.startTime = datetime.strptime(startTime, '%H:%M:%S').time()
+        assessment.endTime = datetime.strptime(endTime, '%H:%M:%S').time()
+
+        # Validate dates
+        if assessment.startDate > assessment.endDate:
+            return jsonify({'error': 'End date cannot be before start date'}), 400
 
         db.session.commit()
         
-        clash=detect_clash(assessment.id)
-        if clash:
-            assessment.clashDetected = True
-            db.session.commit()
-            session['message'] = assessment.courseCode+" - Clash detected! The maximum amount of assessments for this level has been exceeded."
-        else:
-            session['message'] = "Assessment modified"
-    return session['message']
+        # Check for clashes after update
+        clash = detect_clash(assessment.id)
+        assessment.clashDetected = clash
+        db.session.commit()
+
+        return jsonify({
+            'message': 'Assessment updated successfully',
+            'clashDetected': clash,
+            'assessment': assessment.to_json()
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 def detect_clash(id):
-    clash=0
-    sem=Semester.query.order_by(Semester.id.desc()).first() #get the weekly max num of assessments allowed per level
-    max=sem.maxAssessments
-    new_assessment=get_CourseAsm_id(id)                     #get current assessment info
-    compare_code=new_assessment.courseCode.replace(' ','')
-    all_assessments = CourseAssessment.query.filter(not_(CourseAssessment.a_ID.in_([2, 4, 8]))).all()
-    if not new_assessment.endDate: #dates not set yet
+    assessment = get_CourseAsm_id(id)
+    if not assessment or not assessment.endDate:  # dates not set yet
         return False
-    relevant_assessments=[]
-    for a in all_assessments:
-        code=a.courseCode.replace(' ','')
-        if (code[4]==compare_code[4]) and (a.id!=new_assessment.id): #course are in the same level
-            if a.startDate is not None: #assessment has been scheduled
-                relevant_assessments.append(a)
+        
+    compare_code = assessment.courseCode.replace(' ','')
+    all_assessments = CourseAssessment.query.filter(
+        CourseAssessment.courseCode.like(f'%{compare_code[4]}%'),  # Same level
+        CourseAssessment.id != assessment.id,  # Not the same assessment
+        CourseAssessment.startDate.isnot(None),  # Has dates set
+        CourseAssessment.endDate.isnot(None),
+        ~CourseAssessment.a_ID.in_([2, 4, 8])  # Exclude certain types
+    ).all()
+    
+    # Get the clash rule strategy
+    clash_rule = assessment.getClashRule()
+    if not clash_rule:
+        clash_rule = TwoDayRule()  # Default rule
 
-    sunday,saturday=get_week_range(new_assessment.endDate.isoformat())
-    for a in relevant_assessments:
-        dueDate=a.endDate
-        if sunday <= dueDate <= saturday:
-            clash=clash+1
+    # Check if current assessment clashes with others
+    has_clash = clash_rule.check_clash(assessment.startDate, all_assessments)
+    assessment.clashDetected = has_clash
 
-    return clash>=max
+    # Update ALL assessments of the same level, whether there's a clash or not
+    for other_assessment in all_assessments:
+        # Remove current assessment from clash check list
+        remaining_assessments = [a for a in all_assessments if a.id != other_assessment.id]
+        # Add the moved assessment to the check list
+        remaining_assessments.append(assessment)
+        
+        # Check if this assessment clashes with any others
+        other_clash = clash_rule.check_clash(other_assessment.startDate, remaining_assessments)
+        other_assessment.clashDetected = other_clash
+
+    db.session.commit()
+    return has_clash
 
 def get_week_range(iso_date_str):
     date_obj = date.fromisoformat(iso_date_str)
@@ -221,11 +250,38 @@ def register_staff_action():
         status = request.form.get('status')
         email = request.form.get('email')
         pwd = request.form.get('password')
-         
-        # Field Validation is on HTML Page!
-        register_staff(firstName, lastName, staffID, status, email, pwd)
-        return render_template('login.html')  
-        # return redirect(url_for('staff_views.send_email'))  
+
+        # Basic form validation
+        if not all([firstName, lastName, staffID, status, email, pwd]):
+            flash('All fields are required', 'error')
+            return redirect(url_for('staff_views.get_signup_page'))
+
+        # Email format validation
+        if not '@sta.uwi.edu' in email and not '@my.uwi.edu' in email:
+            flash('Please use a valid UWI email address', 'error')
+            return redirect(url_for('staff_views.get_signup_page'))
+
+        # Staff ID validation
+        try:
+            staffID = int(staffID)
+            if len(str(staffID)) != 8:
+                flash('Staff ID must be 8 digits', 'error')
+                return redirect(url_for('staff_views.get_signup_page'))
+        except ValueError:
+            flash('Staff ID must be numeric', 'error')
+            return redirect(url_for('staff_views.get_signup_page'))
+
+        # Register staff
+        staff, message = register_staff(firstName, lastName, staffID, status, email, pwd)
+        
+        if staff:
+            flash('Registration successful! Please login.', 'success')
+            return redirect(url_for('auth_views.get_login_page'))
+        else:
+            flash(message, 'error')
+            return redirect(url_for('staff_views.get_signup_page'))
+
+    return redirect(url_for('staff_views.get_signup_page'))
     
 # Gets account page
 @staff_views.route('/account', methods=['GET'])
@@ -240,16 +296,24 @@ def get_account_page():
 @staff_views.route('/account', methods=['POST'])
 @jwt_required()
 def get_selected_courses():
-    courses=list_Courses()
-    id=get_uid(get_jwt_identity())  #gets u_id from email token
-
+    id = get_uid(get_jwt_identity())
+    
     if request.method == 'POST':
         course_codes_json = request.form.get('courseCodes')
         course_codes = json.loads(course_codes_json)
-        for code in course_codes:
-            obj=add_CourseStaff(id,code)   #add course to course-staff table
-       
-    return redirect(url_for('staff_views.get_account_page'))   
+        
+        try:
+            for code in course_codes:
+                obj = add_CourseStaff(id, code)
+            
+            # Return success response with status code 200
+            return jsonify({'message': 'Courses saved successfully'}), 200
+        except Exception as e:
+            # Return error response with status code 400
+            return jsonify({'error': str(e)}), 400
+        
+    return jsonify({'error': 'Invalid request'}), 400
+
 
 # Gets assessments page
 @staff_views.route('/assessments', methods=['GET'])
@@ -269,7 +333,8 @@ def get_assessments_page():
                 'endDate': assessment.endDate,
                 'startTime': assessment.startTime,
                 'endTime': assessment.endTime,
-                'clashDetected':assessment.clashDetected
+                'clashDetected': assessment.clashDetected,
+                'clashRule': assessment.clashRule  # Add this line
                 }
             else:
                 obj={'id': assessment.id,
@@ -279,11 +344,12 @@ def get_assessments_page():
                     'endDate': assessment.endDate.isoformat(),
                     'startTime': assessment.startTime.isoformat(),
                     'endTime': assessment.endTime.isoformat(),
-                    'clashDetected':assessment.clashDetected
+                    'clashDetected': assessment.clashDetected,
+                    'clashRule': assessment.clashRule  # Add this line
                     }
             assessments.append(obj)     #add object to list of assessments
 
-    return render_template('assessments.html', courses=registered_courses, assessments=assessments)      
+    return render_template('assessments.html', courses=registered_courses, assessments=assessments)     
 
 # Gets add assessment page 
 @staff_views.route('/addAssessment', methods=['GET'])
@@ -304,6 +370,7 @@ def add_assessments_action():
     endDate = request.form.get('endDate')
     startTime = request.form.get('startTime')
     endTime = request.form.get('endTime')
+    clashRule = request.form.get('clashRule')  # Get the clash rule from form
     
     if startDate=='' or endDate=='' or startTime=='' or endTime=='':
         startDate=None
@@ -311,16 +378,31 @@ def add_assessments_action():
         startTime=None
         endTime=None
 
+    # Create new assessment
     newAsm = add_CourseAsm(course, asmType, startDate, endDate, startTime, endTime, False)  
+    
+    # Set the clash rule
+    if newAsm and clashRule:
+        newAsm.clashRule = clashRule
+        db.session.commit()
+
     if newAsm.startDate:
-        clash=detect_clash(newAsm.id)
+        # Get all other assessments in the same level
+        courseLevel = newAsm.courseCode[4]  # Assuming course code format like 'COMP1234'
+        all_assessments = CourseAssessment.query.filter(
+            CourseAssessment.id != newAsm.id
+        ).all()
+        
+        # Check for clashes using the new method
+        clash = check_clash(all_assessments, newAsm.id)
+        
         if clash:
             newAsm.clashDetected = True
             db.session.commit()
-            flash("Clash detected! The maximum amount of assessments for this level has been exceeded.")
-            time.sleep(1)
+            # flash("Clash detected based on selected rule! Please review the assessment dates.")
+            #time.sleep(1)
 
-    return redirect(url_for('staff_views.get_assessments_page'))   
+    return redirect(url_for('staff_views.get_assessments_page'))
     
 
 # Modify selected assessment
@@ -334,32 +416,50 @@ def get_modify_assessments_page(id):
 @staff_views.route('/modifyAssessment/<string:id>', methods=['POST'])
 def modify_assessment(id):
     if request.method=='POST':
-        #get form details
         course = request.form.get('myCourses')
         asmType = request.form.get('AssessmentType')
         startDate = request.form.get('startDate')
         endDate = request.form.get('endDate')
         startTime = request.form.get('startTime')
         endTime = request.form.get('endTime')
+        clashRule = request.form.get('clashRule')
 
-        #update record
-        assessment=get_CourseAsm_id(id)
+        assessment = get_CourseAsm_id(id)
         if assessment:
-            assessment.a_ID=asmType
-            if startDate!='' and endDate!='' and startTime!='' and endTime!='':
-                assessment.startDate=startDate
-                assessment.endDate=endDate
-                assessment.startTime=startTime
-                assessment.endTime=endTime
+            assessment.a_ID = asmType
+            
+            if clashRule:
+                if clashRule == "TwoDayRule":
+                    assessment.setClashRule(TwoDayRule())
+                elif clashRule == "WeekRule":
+                    assessment.setClashRule(OneWeekRuleStrategy())
+            
+            if startDate != '' and endDate != '' and startTime != '' and endTime != '':
+                assessment.startDate = datetime.strptime(startDate, '%Y-%m-%d').date()
+                assessment.endDate = datetime.strptime(endDate, '%Y-%m-%d').date()
+                
+                try:
+                    assessment.startTime = datetime.strptime(startTime, '%H:%M:%S').time()
+                except ValueError:
+                    assessment.startTime = datetime.strptime(startTime, '%H:%M').time()
+
+                try:
+                    assessment.endTime = datetime.strptime(endTime, '%H:%M:%S').time()
+                except ValueError:
+                    assessment.endTime = datetime.strptime(endTime, '%H:%M').time()
 
             db.session.commit()
-
-            clash=detect_clash(assessment.id)
-            if clash:
-                assessment.clashDetected = True
-                db.session.commit()
-                flash("Clash detected! The maximum amount of assessments for this level has been exceeded.")
-                time.sleep(1)
+            
+            if assessment.startDate:
+                # Get other assessments for clash checking
+                other_assessments = CourseAssessment.query.filter(
+                    CourseAssessment.id != assessment.id
+                ).all()
+                
+                clash = check_clash(other_assessments, assessment.id)
+                if clash:
+                    assessment.clashDetected = True
+                    db.session.commit()
 
     return redirect(url_for('staff_views.get_assessments_page'))
 

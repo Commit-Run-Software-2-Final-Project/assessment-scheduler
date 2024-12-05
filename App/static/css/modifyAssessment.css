@@ -3,13 +3,20 @@
     margin-top: 30px;
     padding: 1rem 1.5rem;
     border-radius: 10px;
-
     width: fit-content;
     margin-left: auto;
     margin-right: auto;
 }
 
-#modifyAssessmentForm input, textarea{
+#clashRule + label,
+label[for="clashRule"] {
+    text-align: center;
+    display: block;
+    width: 100%;
+    margin-bottom: 5px;
+}
+
+#modifyAssessmentForm input, textarea, select{
     width: 100%;
     background: var(--primary-color);
     border: none;
@@ -38,7 +45,6 @@ h2{
     width: 100%;
 }
 
-
 #modifyAssessmentBtn:hover{
     background: #5d45bd;
 }
@@ -55,14 +61,12 @@ form textarea{
     resize: none;
 }
 
-
 /* media queries */
 @media screen and (min-width: 480px){
     h2{
         font-size: 34px;
     }
 }
-
 
 @media screen and (min-width: 900px){
     #modifyAssessmentForm{
@@ -76,12 +80,14 @@ form textarea{
         justify-content: left;
     }
 
-    .formSection3 .formInputContainer:nth-child(2){
+    .formSection3 .formInputContainer:nth-child(2),
+    .formSection3 .formInputContainer:nth-child(3){
         margin-left: 7px;
     }
 
-
-    .formSection1 .formInputContainer:nth-child(1), .formSection2 .formInputContainer:nth-child(1), .formSection3 .formInputContainer:nth-child(1){
+    .formSection1 .formInputContainer:nth-child(1), 
+    .formSection2 .formInputContainer:nth-child(1), 
+    .formSection3 .formInputContainer:nth-child(1){
         margin-right: 10px;
     }
 }
@@ -90,5 +96,4 @@ form textarea{
     #modifyAssessmentForm{
         margin-top: 100px;
     }
-
 }
