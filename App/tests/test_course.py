@@ -41,64 +41,52 @@ def session(test_app, _db):
 def test_add_course_new(test_app, session):
     """Test adding a completely new course"""
     with test_app.app_context():
-        # Call the function to add a new course
-        new_course, message = add_Course("COMP3613", "Software Engineering II", 
-                                 "Basics of software engineering", 3, 1, 1)
-        
-        # Verify course details
+        new_course, message = add_Course(
+            "COMP3613", "Software Engineering II", "Basics of software engineering", 3, 1, 1
+        )
         assert new_course.courseCode == "COMP3613"
         assert new_course.courseTitle == "Software Engineering II"
-        
-        # Verify the course was actually added to the database
-        retrieved_course = Course.query.get("COMP3613")
-        assert retrieved_course is not None
+        assert Course.query.get("COMP3613") is not None
+
 
 @pytest.mark.unit
 def test_add_course_existing(test_app, session):
     """Test adding a course that already exists"""
     with test_app.app_context():
-        # First, add the initial course
-        initial_course, message = add_Course("COMP3613", "Software Engineering II", 
-                                     "Basics of software engineering", 3, 1, 1)
-        
-        # Try to add the same course again
-        returned_course, message = add_Course("COMP3613", "Software Engineering II", 
-                                      "Basics of software engineering", 3, 1, 1)
-        
-        # Verify the returned course is the same as the initial course
+        add_Course("COMP3613", "Software Engineering II", "Basics of software engineering", 3, 1, 1)
+        course, message = add_Course(
+            "COMP3613", "Software Engineering II", "Basics of software engineering", 3, 1, 1
+        )
         assert message == "Course code already exists"
-        assert returned_course == None
+        assert course is None
+
+@pytest.mark.unit
+def test_add_course_invalid_data(test_app, session):
+    """Test adding a course with invalid data"""
+    with test_app.app_context():
+        with pytest.raises(ValueError, match="Missing required fields: courseCode"):
+            add_Course(None, "Invalid Course", "No course code", 3, 1, 1)
+
+        with pytest.raises(ValueError, match="Invalid numeric values for level"):
+            add_Course("COMP9999", "Invalid Course", "Invalid level", -1, 1, 1)
+
 
 @pytest.mark.unit
 def test_list_courses(test_app, session):
     """Test listing all courses"""
     with test_app.app_context():
-        # Add some courses
-        course1 , message = add_Course("COMP3613", "Software Engineering II", "Description 1", 3, 1, 1)
-        course2 , message = add_Course("COMP3603", "Human-Computer Interaction", "Description 2", 3, 2, 1)
-        db.session.merge(course1)
-        db.session.merge(course2)
-        # Get the list of courses
+        add_Course("COMP3613", "Software Engineering II", "Description 1", 3, 1, 1)
+        add_Course("COMP3603", "Human-Computer Interaction", "Description 2", 3, 2, 1)
         courses = list_Courses()
-        
-        # Verify the number of courses
-        assert len(courses) >= 2
+        assert len(courses) == 2
 
 @pytest.mark.unit
 def test_get_course(test_app, session):
     """Test retrieving a specific course"""
     with test_app.app_context():
-        # Add a course first
-        add_Course("COMP3613", "Software Engineering II", 
-                   "Basics of software engineering", 3, 1, 1)
-        
-        # Retrieve the course
+        add_Course("COMP3613", "Software Engineering II", "Basics of software engineering", 3, 1, 1)
         course = get_course("COMP3613")
-        
-        # Verify the course details
-        assert course is not None
         assert course.courseCode == "COMP3613"
-        assert course.courseTitle == "Software Engineering II"
         
 @pytest.mark.unit
 def test_course_to_json():
@@ -122,31 +110,19 @@ Integration tests
 def test_integration_add_and_get_course(test_app, session):
     """Integration test for adding and retrieving a course"""
     with test_app.app_context():
-        # Add a course
         add_Course("COMP3613", "Software Engineering II", "Basics of software engineering", 3, 1, 1)
-        
-        # Retrieve the same course
-        retrieved_course = get_course("COMP3613")
-        
-        # Verify the course was retrieved successfully
-        assert retrieved_course is not None
-        assert retrieved_course.courseCode == "COMP3613"
-        assert retrieved_course.courseTitle == "Software Engineering II"
+        course = get_course("COMP3613")
+        assert course.courseTitle == "Software Engineering II"
 
 
 @pytest.mark.integration
 def test_integration_add_and_list_courses(test_app, session):
     """Integration test for adding multiple courses and listing them"""
     with test_app.app_context():
-        # Add courses
         add_Course("COMP3613", "Software Engineering II", "Description 1", 3, 1, 1)
         add_Course("COMP3603", "Human-Computer Interaction", "Description 2", 3, 2, 1)
-        
-        # List all courses
         courses = list_Courses()
-        
-        # Verify the courses are listed
-        course_codes = [course.courseCode for course in courses]
+        course_codes = {course.courseCode for course in courses}
         assert "COMP3613" in course_codes
         assert "COMP3603" in course_codes
 
@@ -182,6 +158,11 @@ def test_delete_nonexistent_course(test_app, session):
 def test_add_course_invalid_data(test_app, session):
     """Test adding a course with missing or invalid data"""
     with test_app.app_context():
-        # Missing fields should raise an exception
-        with pytest.raises(Exception):
+        # Missing fields should raise ValueError
+        with pytest.raises(ValueError, match="Missing required fields: courseCode"):
             add_Course(None, "Invalid Course", "No course code", 3, 1, 1)
+
+        # Invalid numeric values should raise ValueError
+        with pytest.raises(ValueError, match="Invalid numeric values for level"):
+            add_Course("COMP9999", "Invalid Course", "Invalid level", -1, 1, 1)
+
