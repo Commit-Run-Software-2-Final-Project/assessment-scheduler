@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify, render_template
 from App.database import db
+from datetime import date
 from App.models import Staff, Course, Assessment, Programme, Admin, Semester, CourseStaff, CourseAssessment
 
 index_views = Blueprint('index_views', __name__, template_folder='../templates')
@@ -19,7 +20,7 @@ def init():
     db.session.add(bob)
 
     #create semester
-    sem = Semester(startDate='01-02-2024', endDate='01-05-2024', semNum=1)
+    sem = Semester(startDate=date(2024, 2, 1), endDate=date(2024,5,1), semNum=1)
     db.session.add(sem)
 
     #create courses
@@ -37,7 +38,7 @@ def init():
     db.session.add(c6)
 
     #create staff
-    staff = Staff.register(firstName='Jane', lastName='Doe', u_ID=11111111, status='Lecturer', email='jane@mail.com', password='password')
+    staff = Staff(fName='Jane', lName='Doe', u_ID=11111111, status='Lecturer', email='jane@mail.com', password='password')
 
     #assign staff to courses
     cs1 = CourseStaff(u_ID=11111111, courseCode='COMP1700')
@@ -66,24 +67,24 @@ def init():
     db.session.add(asm8)
     
     #create course assessments
-    ca1 = CourseAssessment(courseCode='COMP1700', a_ID=1, startDate='2024-04-08', endDate='2024-04-08', startTime='08:00:00', endTime='10:00:00', clashDetected=False)
-    ca2 = CourseAssessment(courseCode='COMP1700', a_ID=3, startDate='2024-04-09', endDate='2024-04-09', startTime='00:00:00', endTime='23:59:00', clashDetected=False)
-    ca3 = CourseAssessment(courseCode='COMP1700', a_ID=6, startDate='2024-04-10', endDate='2024-04-10', startTime='09:00:00', endTime='12:00:00', clashDetected=False)
-    ca4 = CourseAssessment(courseCode='COMP2700', a_ID=1, startDate='2024-04-15', endDate='2024-04-15', startTime='08:00:00', endTime='10:00:00', clashDetected=False)
-    ca5 = CourseAssessment(courseCode='COMP2700', a_ID=3, startDate='2024-04-16', endDate='2024-04-16', startTime='00:00:00', endTime='23:59:00', clashDetected=False)
-    ca6 = CourseAssessment(courseCode='COMP2700', a_ID=6, startDate='2024-04-17', endDate='2024-04-17', startTime='09:00:00', endTime='12:00:00', clashDetected=False)
-    ca7 = CourseAssessment(courseCode='COMP3700', a_ID=1, startDate='2024-04-22', endDate='2024-04-22', startTime='08:00:00', endTime='10:00:00', clashDetected=False)
-    ca8 = CourseAssessment(courseCode='COMP3700', a_ID=3, startDate='2024-04-23', endDate='2024-04-23', startTime='00:00:00', endTime='23:59:00', clashDetected=False)
-    ca9 = CourseAssessment(courseCode='COMP3700', a_ID=6, startDate='2024-04-24', endDate='2024-04-24', startTime='09:00:00', endTime='12:00:00', clashDetected=False)
-    db.session.add(ca1)
-    db.session.add(ca2)
-    db.session.add(ca3)
-    db.session.add(ca4)
-    db.session.add(ca5)
-    db.session.add(ca6)
-    db.session.add(ca7)
-    db.session.add(ca8)
-    db.session.add(ca9)
+    # ca1 = CourseAssessment(courseCode='COMP1700', a_ID=1, startDate='2024-04-08', endDate='2024-04-08', startTime='08:00:00', endTime='10:00:00', clashDetected=False)
+    # ca2 = CourseAssessment(courseCode='COMP1700', a_ID=3, startDate='2024-04-09', endDate='2024-04-09', startTime='00:00:00', endTime='23:59:00', clashDetected=False)
+    # ca3 = CourseAssessment(courseCode='COMP1700', a_ID=6, startDate='2024-04-10', endDate='2024-04-10', startTime='09:00:00', endTime='12:00:00', clashDetected=False)
+    # ca4 = CourseAssessment(courseCode='COMP2700', a_ID=1, startDate='2024-04-15', endDate='2024-04-15', startTime='08:00:00', endTime='10:00:00', clashDetected=False)
+    # ca5 = CourseAssessment(courseCode='COMP2700', a_ID=3, startDate='2024-04-16', endDate='2024-04-16', startTime='00:00:00', endTime='23:59:00', clashDetected=False)
+    # ca6 = CourseAssessment(courseCode='COMP2700', a_ID=6, startDate='2024-04-17', endDate='2024-04-17', startTime='09:00:00', endTime='12:00:00', clashDetected=False)
+    # ca7 = CourseAssessment(courseCode='COMP3700', a_ID=1, startDate='2024-04-22', endDate='2024-04-22', startTime='08:00:00', endTime='10:00:00', clashDetected=False)
+    # ca8 = CourseAssessment(courseCode='COMP3700', a_ID=3, startDate='2024-04-23', endDate='2024-04-23', startTime='00:00:00', endTime='23:59:00', clashDetected=False)
+    # ca9 = CourseAssessment(courseCode='COMP3700', a_ID=6, startDate='2024-04-24', endDate='2024-04-24', startTime='09:00:00', endTime='12:00:00', clashDetected=False)
+    # db.session.add(ca1)
+    # db.session.add(ca2)
+    # db.session.add(ca3)
+    # db.session.add(ca4)
+    # db.session.add(ca5)
+    # db.session.add(ca6)
+    # db.session.add(ca7)
+    # db.session.add(ca8)
+    # db.session.add(ca9)
 
     db.session.commit()
     return {'message':'Objects created'}
