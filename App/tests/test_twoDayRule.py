@@ -3,8 +3,9 @@ from datetime import date
 from ..models.twoDayRule import TwoDayRule
 
 class MockAssessment:
-    def __init__(self, startDate):
+    def __init__(self, startDate, endDate):
         self.startDate = startDate
+        self.endDate = endDate
 @pytest.mark.unit
 def test_no_clash():
     rule = TwoDayRule()

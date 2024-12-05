@@ -92,7 +92,7 @@ def test_register_staff_duplicate_email(test_app, session):
         email="duplicate@example.com",
         pwd="securepassword"
     )
-    duplicate = register_staff(
+    duplicate, message = register_staff(
         firstName="Jane",
         lastName="Doe",
         u_ID="2",
@@ -100,6 +100,7 @@ def test_register_staff_duplicate_email(test_app, session):
         email="duplicate@example.com",
         pwd="anotherpassword"
     )
+    assert message == "Email already registered"
     assert duplicate is None
 @pytest.mark.integration
 def test_login_staff_success(test_app, session):
