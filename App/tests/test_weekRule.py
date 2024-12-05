@@ -9,36 +9,36 @@ class Assessment:
 @pytest.fixture
 def one_week_rule_strategy():
     return OneWeekRuleStrategy()
-
+@pytest.mark.unit
 def test_no_clash_with_empty_assessments(one_week_rule_strategy):
     assert one_week_rule_strategy.check_clash(date.today(), []) == True
-
+@pytest.mark.unit
 def test_no_clash_with_assessments_outside_one_week(one_week_rule_strategy):
     assessments = [
         Assessment(date.today() - timedelta(days=8)),
         Assessment(date.today() + timedelta(days=8))
     ]
     assert one_week_rule_strategy.check_clash(date.today(), assessments) == True
-
+@pytest.mark.unit
 def test_clash_with_assessment_within_one_week_before(one_week_rule_strategy):
     assessments = [
         Assessment(date.today() - timedelta(days=6))
     ]
     assert one_week_rule_strategy.check_clash(date.today(), assessments) == False
-
+@pytest.mark.unit
 def test_clash_with_assessment_within_one_week_after(one_week_rule_strategy):
     assessments = [
         Assessment(date.today() + timedelta(days=6))
     ]
     assert one_week_rule_strategy.check_clash(date.today(), assessments) == False
-
+@pytest.mark.unit
 def test_clash_with_multiple_assessments_within_one_week(one_week_rule_strategy):
     assessments = [
         Assessment(date.today() - timedelta(days=6)),
         Assessment(date.today() + timedelta(days=5))
     ]
     assert one_week_rule_strategy.check_clash(date.today(), assessments) == False
-
+@pytest.mark.unit
 def test_no_clash_with_assessments_exactly_one_week_away(one_week_rule_strategy):
     assessments = [
         Assessment(date.today() - timedelta(days=7)),
