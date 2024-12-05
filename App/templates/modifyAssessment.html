@@ -14,7 +14,6 @@
         </div>
         <div class="formSection1">
             <div class="formInputContainer">
-                <!-- be a lil div to show the current course being altered -->
                 <label for="myCourses">Course</label>
                 <input type="text" value="{{ca.courseCode}}" readonly>
             </div>
@@ -37,10 +36,7 @@
                     <label for="startTime">Assessment Start Time</label>
                     <input type="time" id="startTime" name="startTime" value="{{ca.startTime}}">
                 </div>
-                
             </div>
-
-    
             <div class="formSection3" id="sectionToHide">
                 <div class="formInputContainer">
                     <label for="endDate">Assessment End Date</label>
@@ -50,12 +46,18 @@
                     <label for="endTime">Assessment End Time</label>
                     <input type="time" id="endTime" name="endTime" value="{{ca.endTime}}">
                 </div>
-                
-
+            </div>
+            <div class="formSection2 clash-rule-section">
+                <div class="formInputContainer">
+                    <label for="clashRule">Clash Rule</label>
+                    <select id="clashRule" name="clashRule" class="clash-rule-select">
+                        <option value="TwoDayRule" {% if ca.clashRule == "TwoDayRule" %}selected{% endif %}>Two Day Rule</option>
+                        <option value="WeekRule" {% if ca.clashRule == "OneWeekRuleStrategy" %}selected{% endif %}>One Week Rule</option>
+                    </select>
+                </div>
             </div>
         </div>
         <button id="modifyAssessmentBtn" type="submit">Save</button>
     </form>
 </div>
-
 {% endblock %}
