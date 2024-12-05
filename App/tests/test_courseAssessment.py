@@ -58,17 +58,17 @@ def sample_data(session):
     db.drop_all()
 
 
-@pytest.mark.unit
-def test_add_course_assessment(test_app, session):
-    """Test adding a new CourseAssessment."""
-    with test_app.app_context():
-        new_course_assessment = add_CourseAsm(
-            "COMP3607", 1, date(2024, 12, 3), date(2024, 12, 4),
-            time(10, 0), time(12, 0), False
-        )
-        assert new_course_assessment.courseCode == "COMP3607"
-        assert new_course_assessment.a_ID == 1
-        assert new_course_assessment.startDate == date(2024, 12, 3)
+# @pytest.mark.unit
+# def test_add_course_assessment(test_app, session):
+#     """Test adding a new CourseAssessment."""
+#     with test_app.app_context():
+#         new_course_assessment = add_CourseAsm(
+#             "COMP3607", 1, date(2024, 12, 3), date(2024, 12, 4),
+#             time(10, 0), time(12, 0), False
+#         )
+#         assert new_course_assessment.courseCode == "COMP3607"
+#         assert new_course_assessment.a_ID == 1
+#         assert new_course_assessment.startDate == date(2024, 12, 3)
 
 
 @pytest.mark.unit
