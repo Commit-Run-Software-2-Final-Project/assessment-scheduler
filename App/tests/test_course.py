@@ -42,8 +42,8 @@ def test_add_course_new(test_app, session):
     """Test adding a completely new course"""
     with test_app.app_context():
         # Call the function to add a new course
-        new_course = add_Course("COMP3613", "Software Engineering II", 
-                                 "Basics of software engineering", 3, 1, 0)
+        new_course, message = add_Course("COMP3613", "Software Engineering II", 
+                                 "Basics of software engineering", 3, 1, 1)
         
         # Verify course details
         assert new_course.courseCode == "COMP3613"
@@ -58,24 +58,26 @@ def test_add_course_existing(test_app, session):
     """Test adding a course that already exists"""
     with test_app.app_context():
         # First, add the initial course
-        initial_course = add_Course("COMP3613", "Software Engineering II", 
-                                     "Basics of software engineering", 3, 1, 0)
+        initial_course, message = add_Course("COMP3613", "Software Engineering II", 
+                                     "Basics of software engineering", 3, 1, 1)
         
         # Try to add the same course again
-        returned_course = add_Course("COMP3613", "Software Engineering II", 
-                                      "Basics of software engineering", 3, 1, 0)
+        returned_course, message = add_Course("COMP3613", "Software Engineering II", 
+                                      "Basics of software engineering", 3, 1, 1)
         
         # Verify the returned course is the same as the initial course
-        assert returned_course.courseCode == initial_course.courseCode
+        assert message == "Course code already exists"
+        assert returned_course == None
 
 @pytest.mark.unit
 def test_list_courses(test_app, session):
     """Test listing all courses"""
     with test_app.app_context():
         # Add some courses
-        add_Course("COMP3613", "Software Engineering II", "Description 1", 3, 1, 0)
-        add_Course("COMP3603", "Human-Computer Interaction", "Description 2", 3, 2, 0)
-        
+        course1 , message = add_Course("COMP3613", "Software Engineering II", "Description 1", 3, 1, 1)
+        course2 , message = add_Course("COMP3603", "Human-Computer Interaction", "Description 2", 3, 2, 1)
+        db.session.merge(course1)
+        db.session.merge(course2)
         # Get the list of courses
         courses = list_Courses()
         
@@ -88,7 +90,7 @@ def test_get_course(test_app, session):
     with test_app.app_context():
         # Add a course first
         add_Course("COMP3613", "Software Engineering II", 
-                   "Basics of software engineering", 3, 1, 0)
+                   "Basics of software engineering", 3, 1, 1)
         
         # Retrieve the course
         course = get_course("COMP3613")
@@ -101,7 +103,7 @@ def test_get_course(test_app, session):
 @pytest.mark.unit
 def test_course_to_json():
     """Test the to_json method of the Course model"""
-    course = Course("COMP3613", "Software Engineering II", "Basics of software engineering", 3, 1, 0)
+    course = Course("COMP3613", "Software Engineering II", "Basics of software engineering", 3, 1, 1)
     course_json = course.to_json()
     
     assert course_json["courseCode"] == "COMP3613"
@@ -109,7 +111,7 @@ def test_course_to_json():
     assert course_json["description"] == "Basics of software engineering"
     assert course_json["level"] == 3
     assert course_json["semester"] == 1
-    assert course_json["aNum"] == 0
+    assert course_json["aNum"] == 1
 
 
 '''
@@ -121,7 +123,7 @@ def test_integration_add_and_get_course(test_app, session):
     """Integration test for adding and retrieving a course"""
     with test_app.app_context():
         # Add a course
-        add_Course("COMP3613", "Software Engineering II", "Basics of software engineering", 3, 1, 0)
+        add_Course("COMP3613", "Software Engineering II", "Basics of software engineering", 3, 1, 1)
         
         # Retrieve the same course
         retrieved_course = get_course("COMP3613")
@@ -137,8 +139,8 @@ def test_integration_add_and_list_courses(test_app, session):
     """Integration test for adding multiple courses and listing them"""
     with test_app.app_context():
         # Add courses
-        add_Course("COMP3613", "Software Engineering II", "Description 1", 3, 1, 0)
-        add_Course("COMP3603", "Human-Computer Interaction", "Description 2", 3, 2, 0)
+        add_Course("COMP3613", "Software Engineering II", "Description 1", 3, 1, 1)
+        add_Course("COMP3603", "Human-Computer Interaction", "Description 2", 3, 2, 1)
         
         # List all courses
         courses = list_Courses()
@@ -155,7 +157,7 @@ def test_delete_course(test_app, session):
     with test_app.app_context():
         # Add a course first
         add_Course("COMP3613", "Software Engineering II", 
-                   "Basics of software engineering", 3, 1, 0)
+                   "Basics of software engineering", 3, 1, 1)
         
         # Verify the course exists
         course = Course.query.get("COMP3613")
@@ -182,4 +184,4 @@ def test_add_course_invalid_data(test_app, session):
     with test_app.app_context():
         # Missing fields should raise an exception
         with pytest.raises(Exception):
-            add_Course(None, "Invalid Course", "No course code", 3, 1, 0)
+            add_Course(None, "Invalid Course", "No course code", 3, 1, 1)

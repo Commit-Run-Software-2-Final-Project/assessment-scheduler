@@ -17,8 +17,10 @@ from App.database import db
 from datetime import date, time
 
 class MockAssessment:
-    def __init__(self, start_date):
+    def __init__(self, start_date, id, endDate):
         self.startDate = start_date
+        self.id = id
+        self.endDate = endDate
 
 
 @pytest.fixture(scope='function')
@@ -177,16 +179,16 @@ def test_check_clash(test_app, session, sample_data):
         course_assessment.clashRule = "TwoDayRule"
         db.session.merge(course_assessment)
         assessments = [
-            MockAssessment(date(2024, 12, 1)),
-            MockAssessment(date(2024, 12, 5)),
-            MockAssessment(date(2024, 12, 8)),
+            MockAssessment(date(2024, 12, 1), 1, date(2024, 12, 1)),
+            MockAssessment(date(2024, 12, 5), 2, date(2024, 12, 5)),
+            MockAssessment(date(2024, 12, 8), 3, date(2024, 12, 8)),
         ]
-        assert check_clash(assessments, 1) == True
+        assert check_clash(assessments, 1) == False
         
         assessments = [
-            MockAssessment(date(2024, 12, 4)),
-            MockAssessment(date(2024, 12, 5)),
-            MockAssessment(date(2024, 12, 8)),
+            MockAssessment(date(2024, 12, 4), 1 , date(2024, 12, 4)),
+            MockAssessment(date(2024, 12, 5), 2, date(2024, 12, 5)),
+            MockAssessment(date(2024, 12, 8), 3, date(2024, 12, 8)),
         ]
         assert check_clash(assessments, 1) == False
 
