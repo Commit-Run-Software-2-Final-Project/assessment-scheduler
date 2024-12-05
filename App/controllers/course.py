@@ -1,39 +1,63 @@
 from App.models import Course
 from App.database import db
 
-def add_Course(courseCode, courseTitle, description, level, semester, aNum):
-    try:
-        if not all([courseCode, courseTitle, description, level, semester, aNum]):
-            return None, "All fields are required"
+# def add_Course(courseCode, courseTitle, description, level, semester, aNum):
+#     try:
+#         if not all([courseCode, courseTitle, description, level, semester, aNum]):
+#             return None, "All fields are required"
         
-        # Check if course already exists
-        existing_course = Course.query.get(courseCode)
-        if existing_course:
-            return None, "Course code already exists"
+#         # Check if course already exists
+#         existing_course = Course.query.get(courseCode)
+#         if existing_course:
+#             return None, "Course code already exists"
             
-        # Validate numeric fields
-        try:
-            level = int(level)
-            semester = int(semester)
-            aNum = int(aNum)
-        except ValueError:
-            return None, "Level, semester, and number of assessments must be numeric"
+#         # Validate numeric fields
+#         try:
+#             level = int(level)
+#             semester = int(semester)
+#             aNum = int(aNum)
+#         except ValueError:
+#             return None, "Level, semester, and number of assessments must be numeric"
             
-        # Validate ranges
-        if not (1 <= level <= 3):
-            return None, "Level must be between 1 and 3"
-        if not (1 <= semester <= 3):
-            return None, "Semester must be between 1 and 3"
-        if not (0 <= aNum <= 10):
-            return None, "Number of assessments must be between 0 and 10"
+#         # Validate ranges
+#         if not (1 <= level <= 3):
+#             return None, "Level must be between 1 and 3"
+#         if not (1 <= semester <= 3):
+#             return None, "Semester must be between 1 and 3"
+#         if not (0 <= aNum <= 10):
+#             return None, "Number of assessments must be between 0 and 10"
             
-        newCourse = Course(courseCode, courseTitle, description, level, semester, aNum)
-        db.session.add(newCourse)
-        db.session.commit()
-        return newCourse, "Course added successfully"
-    except Exception as e:
-        db.session.rollback()
-        return None, f"Failed to add course: {str(e)}"
+#         newCourse = Course(courseCode, courseTitle, description, level, semester, aNum)
+#         db.session.add(newCourse)
+#         db.session.commit()
+#         return newCourse, "Course added successfully"
+#     except Exception as e:
+#         db.session.rollback()
+#         return None, f"Failed to add course: {str(e)}"
+
+def add_Course(courseCode, courseTitle, description, level, semester, aNum):
+    if not courseCode or not courseTitle or not description:
+        raise ValueError("Missing required fields: courseCode, courseTitle, or description")
+    if level <= 0 or semester <= 0 or aNum <= 0:
+        raise ValueError("Invalid numeric values for level, semester, or aNum")
+
+    existing_course = Course.query.get(courseCode)
+    if existing_course:
+        return None, "Course code already exists"
+    
+    new_course = Course(
+        courseCode=courseCode,
+        courseTitle=courseTitle,
+        description=description,
+        level=level,
+        semester=semester,
+        aNum=aNum
+    )
+    db.session.add(new_course)
+    db.session.commit()
+    return new_course, "Course added successfully"
+
+        
 
 def list_Courses():
     return Course.query.all() 
