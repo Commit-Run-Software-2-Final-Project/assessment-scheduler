@@ -8,7 +8,7 @@ class User(db.Model, UserMixin):
     __abstract__ = True
 
     u_ID = db.Column(db.Integer, unique=True, primary_key=True)  
-    password = db.Column(db.String(120), nullable=False)
+    password = db.Column(db.String(500), nullable=False)
     email = db.Column(db.String(120), nullable=False, unique = True)
 
     def __init__(self, u_ID, password, email):

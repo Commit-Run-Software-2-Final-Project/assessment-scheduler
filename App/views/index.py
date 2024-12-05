@@ -39,7 +39,7 @@ def init():
 
     #create staff
     staff = Staff(fName='Jane', lName='Doe', u_ID=11111111, status='Lecturer', email='jane@mail.com', password='password')
-
+    db.session.add(staff)
     #assign staff to courses
     cs1 = CourseStaff(u_ID=11111111, courseCode='COMP1700')
     cs2 = CourseStaff(u_ID=11111111, courseCode='COMP2700')
